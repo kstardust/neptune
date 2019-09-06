@@ -1,0 +1,15 @@
+syntax = "proto3";
+option py_generic_services = true;
+package bar;
+
+message BarRequest {
+  string message = 1;
+}
+
+message BarResponse {
+  string message = 1;
+}
+
+service Bar {
+  rpc Bar(BarRequest) returns (BarResponse);
+}

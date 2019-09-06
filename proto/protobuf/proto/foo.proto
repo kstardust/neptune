@@ -1,0 +1,15 @@
+syntax = "proto3";
+option py_generic_services = true;
+package foo;
+
+message FooRequest {
+  string message = 1;
+}
+
+message FooResponse {
+  string message = 1;
+}
+
+service Foo {
+  rpc Foo(FooRequest) returns (FooResponse);
+}

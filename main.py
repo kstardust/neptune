@@ -3,7 +3,6 @@ import setting
 import argparse
 import sys
 
-
 parser = argparse.ArgumentParser(description="neptune")
 parser.add_argument('-c', help='client mode', action='store_true')
 
@@ -42,7 +41,11 @@ async def client():
     await se_client_handler(setting.PEER_CLASS, reader, writer)
 
 
+from proto.neptune_rpc import main
+
 if __name__ == '__main__':
+    main()
+    exit(0)
     args = parser.parse_args()
     if args.c:
         asyncio.run(client())

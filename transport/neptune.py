@@ -7,6 +7,7 @@ from logf import logger
 class Neptune(PeerAbstract):
     ProtocolMeta = struct.Struct('!HHHH')
     ProtocolMagNum = 0x0001
+    Reserve = 0
 
     def __init__(self, *args, **kargs):
         super().__init__(*args, **kargs)
@@ -38,9 +39,13 @@ class Neptune(PeerAbstract):
                 self.buff[self.ProtocolMeta.size: self.clen]
             )
 
+            # self.buff = self.buff[self.clen:] is much more
+            # slower than delete, while `self.buff[:self.clen] = []`
+            # is equal to `del self.buff[:self.clen]`
             self.buff[:self.clen] = []
             self.msg_len -= self.clen
             self.clen = 0
+
             # process remain data in buff
             await self.on_input(None)
 
@@ -50,9 +55,9 @@ class Neptune(PeerAbstract):
     async def send(self, data):
         # FIXME: message length limit
         length = len(data) + self.ProtocolMeta.size
-        reserve = 0
+
         data = self.ProtocolMeta.pack(
-            self.ProtocolMagNum, length, reserve, reserve
+            self.ProtocolMagNum, length, self.Reserve, self.Reserve
         ) + data
         await super().send(data)
 

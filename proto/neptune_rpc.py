@@ -1,26 +1,54 @@
 from transport.neptune import Neptune
 from logf import logger
 from .protobuf.output.rpc_pb2 import RPC, Response, Request
+from google.protobuf import service
 
 
-class NeptuneRpc(Neptune):
-
-    class OutCall:
-        __slots__ = ['cls', 'sid']
-
-        def __init__(self, cls, sid):
-            self.cls = cls
-            self.sid = sid
-
-    def __init__(self, *args, **kargs):
-        services = kargs.pop('services')
-#        super().__init__(*args, **kargs)
-        self.services = {}
-        self._outcalls = {}
+class NeptuneRpcChannel(service.RpcChannel):
+    '''
+    RpcChannel
+    '''
+    def __init__(self, manager):
+        self.manager = manager
+        self.sessions = {}
         self.sid = 0
-        for s in services:
-            self.services[s.GetDescriptor().name] = s
 
+    def gen_new_sid(self):
+        self.sid += 1
+        self.sid = max(self.sid, 0)
+        return self.sid
+
+    async def CallMethod(self, method_descriptor, rpc_controller, request, response_class, done):
+        rpc = RPC()
+        rpc.request.service = method_descriptor.containing_service.name
+        rpc.request.method = method_descriptor.name
+        rpc.request.args = request.SerializeToString()
+        rpc.sid = self.gen_new_sid()
+        logger.debug("rpc CallMethod: {}".format(rpc))
+        if done:
+            self.sessions[rpc.sid] = (response_class, done)
+
+        await self.manager.send(rpc.SerializeToString())
+        # Test
+        # await self.manager.on_message(rpc.SerializeToString())
+
+    async def on_response(self, rpc):
+        if rpc.HasField("response"):
+            sess = self.sessions.get(rpc.sid)
+            if sess:
+                cls, done = sess
+                response = cls()
+                response.ParseFromString(rpc.response.response)
+                done(response)
+                return
+
+        logger.error("invalid response: {}".format(rpc))
+
+
+class NeptuneRpcCaller:
+    '''
+    RpcCaller, decode rpc request and call corresponding method.
+    '''
     class ResponseCallback:
         __slots__ = ['sid', 'response']
 
@@ -31,66 +59,69 @@ class NeptuneRpc(Neptune):
         def __call__(self, response):
             self.response = response
 
-    def gen_new_sid(self):
-        self.sid += 1
-        return self.sid
+    def __init__(self, manager):
+        self.manager = manager
 
-    async def CallMethod(self, method_descriptor, rpc_controller, request, done):
-        # FIXME: use service_Stub and RpcChannel instead.
-        rpc = RPC()
-        rpc.request.service = method_descriptor.containing_service.name
-        rpc.request.method = method_descriptor.name
-        rpc.request.args = request.SerializeToString()
-        rpc.sid = self.gen_new_sid()
-        logger.debug("rpc CallMethod: {}".format(rpc))
-        if done:
-            self._outcalls[rpc.sid] = self.OutCall(rpc.sid, method_descriptor.output_type)
+    async def call(self, rpc):
+        service = self.manager.get_service(rpc.request.service)
+        method = service.GetDescriptor().FindMethodByName(rpc.request.method)
 
-        # Test
-        await self.on_message(rpc.SerializeToString())
-#        await self.send(rpc.SerializeToString())
+        request_args = service.GetRequestClass(method)()
+        request_args.ParseFromString(rpc.request.args)
 
-    async def on_message(self, msg):
-        rpc = RPC()
-        rpc.ParseFromString(msg)
+        controller = None
+        callback = self.ResponseCallback(rpc.sid)
 
-        if rpc.HasField("request"):
-            service = self.services.get(rpc.request.service)
-            method = service.GetDescriptor().FindMethodByName(rpc.request.method)
+        # synchronously call method
+        co = service.CallMethod(method, controller, request_args, callback)
 
-            request_args = service.GetRequestClass(method)()
-            request_args.ParseFromString(rpc.request.args)
+        # await if method is a coroutine, i.e. asynchronous method
+        if asyncio.iscoroutine(co):
+            await co
 
-            controller = None
-            callback = self.ResponseCallback(rpc.sid)
-
-            # synchronously call method
-            co = service.CallMethod(method, controller, request_args, callback)
-
-            # await if method is coroutine, i.e. asynchronous method
-            if asyncio.iscoroutine(co):
-                await co
-
-            # send response
-            if callback.response:
-                await self.send_response(callback.sid,  callback.response)
-
-        elif rpc.HasField("response"):
-            logger.info("Response call {}".format(rpc))
-        else:
-            logger.error("invalid rpc, content: {}".format(rpc))
+        # send response
+        if callback.response:
+            await self.send_response(callback.sid,  callback.response)
 
     async def send_response(self, sid, response):
         rpc = RPC()
         rpc.response.response = response.SerializeToString()
         rpc.sid = sid
         logger.debug("send response: {}".format(rpc))
-        # await self.send(rpc.SerializeToString())
+        # await self.manager.on_message(rpc.SerializeToString())
+        await self.manager.send(rpc.SerializeToString())
+
+
+class NeptuneRpc(Neptune):
+
+    def __init__(self, *args, **kargs):
+        services = kargs.pop('services')
+        super().__init__(*args, **kargs)
+        self.services = {}
+        self.rpc_channel = NeptuneRpcChannel(self)
+        self.rpc_caller = NeptuneRpcCaller(self)
+        self.sid = 0
+        for s in services:
+            self.services[s.GetDescriptor().name] = s
+
+    def get_service(self, service):
+        return self.services.get(service)
+
+    async def on_message(self, msg):
+        rpc = RPC()
+        rpc.ParseFromString(msg)
+
+        if rpc.HasField("request"):
+            await self.rpc_caller.call(rpc)
+        elif rpc.HasField("response"):
+            await self.rpc_channel.on_response(rpc)
+        else:
+            logger.error("unknown messge, content: {}".format(rpc))
 
 
 # Test
 import asyncio
-from service.foo import FooService, FooRequest
+from service.foo import FooService, FooRequest, Foo_Stub
 def main():
     foo = FooService()
     nep = NeptuneRpc(services=[foo])
@@ -106,7 +137,9 @@ def main():
     rpc.sid = 1
 
     async def func():
-        await nep.CallMethod(foo.GetDescriptor().FindMethodByName("Foo"), None, args, None)
+        foo_service = Foo_Stub(nep.rpc_channel)
+        controller = None
+        await foo_service.Foo(controller, args, lambda _: print("callback"))
 #        await nep.on_message(rpc.SerializeToString())
         # if rpc.service and rpc.method:
         #     service = services.get(rpc.service)

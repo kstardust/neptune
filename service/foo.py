@@ -1,12 +1,11 @@
 import asyncio
 from proto.protobuf.output.foo_pb2 import (
-    Foo, FooRequest, FooResponse
+    Foo, FooRequest, FooResponse, Foo_Stub
 )
 
 
 class FooService(Foo):
     async def Foo(self, rpc_controller, request, done):
-        await asyncio.sleep(1)
         response = FooResponse()
-        response.message = request.message
+        response.message = "foo_" + request.message
         done(response)

@@ -29,8 +29,6 @@ class NeptuneRpcChannel(service.RpcChannel):
             self.sessions[rpc.sid] = (response_class, done)
 
         await self.manager.send(rpc.SerializeToString())
-        # Test
-        # await self.manager.on_message(rpc.SerializeToString())
 
     async def on_response(self, rpc):
         if rpc.HasField("response"):
@@ -88,7 +86,6 @@ class NeptuneRpcCaller:
         rpc.response.response = response.SerializeToString()
         rpc.sid = sid
         logger.debug("send response: {}".format(rpc))
-        # await self.manager.on_message(rpc.SerializeToString())
         await self.manager.send(rpc.SerializeToString())
 
 

@@ -34,7 +34,7 @@ class NeptuneRpcChannel(service.RpcChannel):
 
     async def on_response(self, rpc):
         if rpc.HasField("response"):
-            sess = self.sessions.get(rpc.sid)
+            sess = self.sessions.pop(rpc.sid, None)
             if sess:
                 cls, done = sess
                 response = cls()

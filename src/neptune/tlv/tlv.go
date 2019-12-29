@@ -62,7 +62,7 @@ func WriteTLV(w io.Writer, tlv *TLV) error {
 		return fmt.Errorf("write Payload: %v", err)
 	}
 
-	io.Copy(w, b)
+	_, err = io.Copy(w, b)
 	return err
 }
 

@@ -58,6 +58,8 @@ func main() {
 	flag.Parse()
 	log.SetFlags(0)
 	http.HandleFunc("/", handler(echo))
-	http.HandleFunc("/adapter", handler(wsadapter.Adapter))
+	ws := new(wsadapter.WSAdapter)
+	ws.DestAddr = "localhost:2020"
+	http.HandleFunc("/adapter", handler(ws.Adapter))
 	log.Fatal(http.ListenAndServe(*addr, nil))
 }

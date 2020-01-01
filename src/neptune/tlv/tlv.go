@@ -14,6 +14,15 @@ type TLV struct {
 	Value  []byte
 }
 
+// pack a message
+func PackTLVMsg(tag uint16, msg []byte) *TLV {
+	t := new(TLV)
+	t.Tag = tag
+	t.Value = msg
+	t.Length = uint16(len(msg))
+	return t
+}
+
 // Read a TLV struct
 func ReadTLV(r io.Reader) (*TLV, error) {
 	var record TLV
@@ -40,30 +49,45 @@ func ReadTLV(r io.Reader) (*TLV, error) {
 
 // Write a TLV struct
 func WriteTLV(w io.Writer, tlv *TLV) error {
+	_, err := w.Write(tlv.Bytes())
+	return err
+}
 
-	// Write to a buffer first, then copy to destination,
-	// I am imitating a batch write operaton here(writev)
-	// to reduce system calls(when destination is a socket
-	// or a file, and so forth)
+// Write a TLV struct
+func (t *TLV) Write(w io.Writer) error {
+	return WriteTLV(w, t)
+}
+
+// Read a TLV struct
+func (t *TLV) Read(r io.Reader) error {
+	tlv, error := ReadTLV(r)
+	if error != nil {
+		return error
+	}
+	*t = *tlv
+	return nil
+}
+
+// Return bytes of a TLV struct
+func (t *TLV) Bytes() []byte {
 	b := new(bytes.Buffer)
 
-	err := binary.Write(b, binary.BigEndian, tlv.Tag)
+	err := binary.Write(b, binary.BigEndian, t.Tag)
 	if err != nil {
-		return fmt.Errorf("write Length: %v", err)
+		log.Fatalf("TLV Bytes, write Length: %v", err)
 	}
 
-	err = binary.Write(b, binary.BigEndian, tlv.Length)
+	err = binary.Write(b, binary.BigEndian, t.Length)
 	if err != nil {
-		return fmt.Errorf("write Length: %v", err)
+		log.Fatalf("TLV Bytes, write Length: %v", err)
 	}
 
-	err = binary.Write(b, binary.BigEndian, tlv.Value)
+	err = binary.Write(b, binary.BigEndian, t.Value)
 	if err != nil {
-		return fmt.Errorf("write Payload: %v", err)
+		log.Fatalf("TLV Bytes, write Payload: %v", err)
 	}
 
-	_, err = io.Copy(w, b)
-	return err
+	return b.Bytes()
 }
 
 func DisplayTLV(t *TLV) {

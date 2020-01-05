@@ -1,8 +1,6 @@
 package main
 
 import (
-	"bytes"
-	"fmt"
 	"io"
 	"log"
 	"neptune/tlv"
@@ -16,6 +14,7 @@ func handle(c net.Conn) {
 	for {
 		msg, err := tlv.ReadTLV(c)
 		if err == io.EOF {
+			log.Printf("connection closed")
 			return
 		}
 
@@ -24,11 +23,16 @@ func handle(c net.Conn) {
 			return
 		}
 		tlv.DisplayTLV(msg)
+		err = msg.Write(c)
+		if err != nil {
+			log.Printf("error writeTLV: %v", err)
+			return
+		}
 	}
 }
 
 func main() {
-	listener, err := net.Listen("tcp", "localhost:2019")
+	listener, err := net.Listen("tcp", "localhost:2020")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -44,21 +48,21 @@ func main() {
 		go handle(conn)
 	}
 
-	t := tlv.TLV{}
-	t.Tag = 1
-	t.Value = []byte("Hello World")
-	t.Length = uint16(len(t.Value))
+	// t := tlv.TLV{}
+	// t.Tag = 1
+	// t.Value = []byte("Hello World")
+	// t.Length = uint16(len(t.Value))
 
-	var buf bytes.Buffer
-	err = tlv.WriteTLV(&buf, &t)
-	if err != nil {
-		log.Fatal(err)
-	}
+	// var buf bytes.Buffer
+	// err = tlv.WriteTLV(&buf, &t)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	fmt.Println(buf.Bytes())
-	r, err := tlv.ReadTLV(&buf)
-	if err != nil {
-		log.Fatal(err)
-	}
-	tlv.DisplayTLV(r)
+	// fmt.Println(buf.Bytes())
+	// r, err := tlv.ReadTLV(&buf)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// tlv.DisplayTLV(r)
 }

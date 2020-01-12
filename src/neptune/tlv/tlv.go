@@ -27,7 +27,7 @@ func PackTLVMsg(tag uint16, msg []byte) *TLV {
 func ReadTLV(r io.Reader) (*TLV, error) {
 	var record TLV
 	err := binary.Read(r, binary.BigEndian, &record.Tag)
-	if err == io.EOF {
+	if err == io.ErrUnexpectedEOF {
 		return nil, io.EOF
 	} else if err != nil {
 		return nil, fmt.Errorf("error reading TLV tag: %v", err)

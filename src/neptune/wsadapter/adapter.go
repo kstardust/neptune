@@ -29,7 +29,7 @@ func (w *WSAdapter) Adapter(c *websocket.Conn) error {
 		for {
 			t, err := tlv.ReadTLV(destc)
 			if err == io.EOF {
-				return err
+				destDone <- nil 
 			}
 			if err != nil {
 				destDone <- fmt.Errorf("adapter Read dest: %v", err)

@@ -1,0 +1,25 @@
+syntax = "proto3";
+option py_generic_services = true;
+option go_package = "neptune/nrpc";
+package nrpc;
+
+message RPC {
+  Request request = 1;
+  Response response = 2;
+  uint32 sid = 3;
+}
+
+message Request {
+  string method = 1;
+  bytes args = 2;
+}
+
+message Error {
+  int32 code = 1;
+  string msg = 2;
+}
+
+message Response {
+  bytes response = 1;
+  Error error = 2;
+}

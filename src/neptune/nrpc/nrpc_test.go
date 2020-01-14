@@ -41,7 +41,7 @@ func TestTransporter(t *testing.T) {
 		t.Errorf("write: %v\n", err)
 	}
 
-	tp := &Transporter{}
+	tp := &RPCTransporter{}
 	tp.RWC = rwc
 	tp.Serve()
 }

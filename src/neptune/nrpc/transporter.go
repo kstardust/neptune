@@ -8,18 +8,40 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
-type Transporter struct {
-	RWC io.ReadWriteCloser
+type RPCObserver interface {
+	Update(r *RPC) error
 }
 
-func (t *Transporter) Serve() {
-	if t.RWC == nil {
+type RPCTransporter struct {
+	RWC       io.ReadWriteCloser
+	observers []RPCObserver
+	trpc      *RPC
+}
+
+func (t *RPCTransporter) notifyObservers() error {
+	if t.trpc == nil {
+		return nil
+	}
+	for _, observer := range t.observers {
+		if err := observer.Update(t.trpc); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (t *RPCTransporter) RegisterObserver(o RPCObserver) {
+	t.observers = append(t.observers, o)
+}
+
+func (rpct *RPCTransporter) Serve() {
+	if rpct.RWC == nil {
 		log.Fatal("RWC is nil")
 	}
 
-	defer t.RWC.Close()
+	defer rpct.RWC.Close()
 	for {
-		t, err := tlv.ReadTLV(t.RWC)
+		t, err := tlv.ReadTLV(rpct.RWC)
 		if err != nil {
 			log.Printf("read tlv: %v\n", err)
 			return
@@ -31,6 +53,11 @@ func (t *Transporter) Serve() {
 			log.Printf("unmarshal RPC: %v\n", err)
 			return
 		}
-		log.Println(rpc)
+		rpct.trpc = rpc
+		err = rpct.notifyObservers()
+		if err != nil {
+			log.Printf("notifyObservers error: %v\n", err)
+			return
+		}
 	}
 }

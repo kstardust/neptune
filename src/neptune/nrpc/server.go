@@ -5,11 +5,12 @@
 package nrpc
 
 import (
+	"fmt"
+	"github.com/golang/protobuf/proto"
 	"io"
 	"log"
+	"neptune/tlv"
 	"net/rpc"
-
-	//	"github.com/golang/protobuf/proto"
 
 	"net"
 )
@@ -17,24 +18,56 @@ import (
 type NeptuneRpcServer rpc.Server
 
 type NeptuneRpcCodec struct {
-	rwc io.ReadWriteCloser
+	rwc      io.ReadWriteCloser
+	request  *RPC
+	response *RPC
 }
 
-func (codec *NeptuneRpcCodec) ReadRequestHeader(*rpc.Request) error {
+func (codec *NeptuneRpcCodec) ReadRequestHeader(r *rpc.Request) error {
+	r.ServiceMethod = codec.request.GetRequest().GetMethod()
+	r.Seq = uint64(codec.request.GetSid())
 	return nil
 }
 
-func (codec *NeptuneRpcCodec) ReadRequestBody(interface{}) error {
+func (codec *NeptuneRpcCodec) ReadRequestBody(body interface{}) error {
+	err := proto.Unmarshal(codec.request.GetRequest().GetArgs(), body.(proto.Message))
+	if err != nil {
+		return fmt.Errorf("ReadRequestBody: %v", err)
+	}
 	return nil
 }
 
-func (codec *NeptuneRpcCodec) WriteResponse(*rpc.Response, interface{}) error {
+func (codec *NeptuneRpcCodec) WriteResponse(resp *rpc.Response, reply interface{}) error {
+	replyData, err := proto.Marshal(reply.(proto.Message))
+	if err != nil {
+		return err
+	}
+
+	codec.response = &RPC{}
+	codec.response.Sid = uint32(resp.Seq)
+	codec.response.Response = &Response{}
+	codec.response.Response.Response = replyData
+
 	return nil
 }
 
 // interface requirement: Close can be called multiple times and must be idempotent.
 func (codec *NeptuneRpcCodec) Close() error {
+	// stub TBD
 	return nil
+}
+
+func (codec *NeptuneRpcCodec) Update(r *RPC) (*RPC, error) {
+	if r.GetRequest() == nil {
+		return nil, nil
+	}
+
+	codec.request = r
+	err := rpc.ServeRequest(codec)
+	if err != nil {
+		return nil, err
+	}
+	return nil, nil
 }
 
 // ServerNeptune is the same as ServerConn except it uses a customized
@@ -58,6 +91,10 @@ func (server *NeptuneRpcServer) AcceptNeptune(lis net.Listener) {
 			log.Print("rpc.Serve: accept:", err.Error())
 			return
 		}
-		go server.ServeNeptune(conn)
+		rpct := RPCTransporter{}
+		rpct.Mesger = &tlv.TLVCodec{
+			RWC: conn,
+		}
+		go rpct.Serve()
 	}
 }

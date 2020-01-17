@@ -42,7 +42,10 @@ func TestTransporter(t *testing.T) {
 	}
 
 	tp := &RPCTransporter{}
-	tp.RWC = rwc
+	tp.Mesger = &tlv.TLVCodec{
+		RWC: rwc,
+	}
+
 	tp.Serve()
 }
 

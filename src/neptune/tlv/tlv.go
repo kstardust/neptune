@@ -8,10 +8,46 @@ import (
 	"log"
 )
 
+type TLVCodec struct {
+	Tag uint16
+	RWC io.ReadWriteCloser
+}
+
 type TLV struct {
 	Tag    uint16
 	Length uint16
 	Value  []byte
+}
+
+func (codec *TLVCodec) Close() {
+	if codec.RWC != nil {
+		codec.RWC.Close()
+	}
+
+	codec.RWC = nil
+}
+
+func (codec *TLVCodec) ReadMessage() ([]byte, error) {
+	if codec.RWC == nil {
+		log.Fatal("TLVCode rw is nil")
+	}
+
+	t, err := ReadTLV(codec.RWC)
+	if err != nil {
+		return nil, fmt.Errorf("TLVCodec ReadMessage: %v\n", err)
+	}
+	return t.Value, nil
+}
+
+func (codec *TLVCodec) SendMessage(msg []byte) error {
+	if codec.RWC == nil {
+		log.Fatal("TLVCode rw is nil")
+	}
+
+	if _, err := codec.RWC.Write(PackTLVMsg(codec.Tag, msg).Bytes()); err != nil {
+		return fmt.Errorf("TLVCodec SendMessage: %v", err)
+	}
+	return nil
 }
 
 // pack a message

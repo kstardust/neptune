@@ -18,7 +18,6 @@ import (
 type NeptuneRpcServer rpc.Server
 
 type NeptuneRpcCodec struct {
-	rwc      io.ReadWriteCloser
 	request  *RPC
 	response *RPC
 }

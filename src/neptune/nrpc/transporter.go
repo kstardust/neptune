@@ -34,6 +34,10 @@ func (t *RPCTransporter) notifyObservers() error {
 			return fmt.Errorf("notifyObservers: Update Observer: %v", err)
 		}
 
+		if reply == nil {
+			return nil
+		}
+
 		replyData, err := proto.Marshal(reply)
 		if err != nil {
 			return fmt.Errorf("notifyObservers: Cannot Marshal: %v", err)

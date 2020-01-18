@@ -50,6 +50,7 @@ func (codec *TLVCodec) SendMessage(msg []byte) error {
 	if _, err := codec.RWC.Write(PackTLVMsg(codec.Tag, msg).Bytes()); err != nil {
 		return fmt.Errorf("TLVCodec SendMessage: %v", err)
 	}
+
 	return nil
 }
 

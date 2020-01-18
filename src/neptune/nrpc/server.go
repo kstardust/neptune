@@ -6,11 +6,12 @@ package nrpc
 
 import (
 	"fmt"
-	"github.com/golang/protobuf/proto"
 	"io"
 	"log"
 	"neptune/tlv"
 	"net/rpc"
+
+	"github.com/golang/protobuf/proto"
 
 	"net"
 )
@@ -29,6 +30,10 @@ func (codec *NeptuneRpcCodec) ReadRequestHeader(r *rpc.Request) error {
 }
 
 func (codec *NeptuneRpcCodec) ReadRequestBody(body interface{}) error {
+	if body == nil {
+		return nil
+	}
+
 	err := proto.Unmarshal(codec.request.GetRequest().GetArgs(), body.(proto.Message))
 	if err != nil {
 		return fmt.Errorf("ReadRequestBody: %v", err)
@@ -37,6 +42,11 @@ func (codec *NeptuneRpcCodec) ReadRequestBody(body interface{}) error {
 }
 
 func (codec *NeptuneRpcCodec) WriteResponse(resp *rpc.Response, reply interface{}) error {
+	if struct{}{} == reply {
+		// rpc package uses struct{}{} as response to invalid request
+		return nil
+	}
+
 	replyData, err := proto.Marshal(reply.(proto.Message))
 	if err != nil {
 		return err
@@ -60,13 +70,14 @@ func (codec *NeptuneRpcCodec) Update(r *RPC) (*RPC, error) {
 	if r.GetRequest() == nil {
 		return nil, nil
 	}
+	codec.response = nil
 
 	codec.request = r
 	err := rpc.ServeRequest(codec)
 	if err != nil {
 		return nil, err
 	}
-	return nil, nil
+	return codec.response, nil
 }
 
 // ServerNeptune is the same as ServerConn except it uses a customized

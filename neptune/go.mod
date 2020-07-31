@@ -1,4 +1,4 @@
-module go-grpc
+module neptune
 
 go 1.14
 

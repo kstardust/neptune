@@ -1,15 +1,34 @@
 package main
 
 import (
-	pb "go-grpc/src/proto"
+	"context"
 	"io"
 	"log"
+	pb "neptune/src/proto"
+	"neptune/src/room"
 	"net"
 
 	"google.golang.org/grpc"
 )
 
-type server struct{}
+type server struct {
+	Rooms map[room.RoomId]room.Room
+}
+
+func (s server) CreateRoom(ctx context.Context, srv *pb.CreateRoomRequest) (*pb.CreateRoomResponse, error) {
+	log.Println("create room %v", srv)
+	return &pb.CreateRoomResponse{RoomId: "xxxx"}, nil
+}
+
+func (s server) JoinRoom(ctx context.Context, srv *pb.JoinRoomRequest) (*pb.JoinRoomResponse, error) {
+	log.Println("join room %v", srv)
+	return &pb.JoinRoomResponse{}, nil
+}
+
+func (s server) Stream(srv pb.Neptune_StreamServer) error {
+	log.Println("stream")
+	return nil
+}
 
 func (s server) Max(srv pb.Math_MaxServer) error {
 	log.Println("start new server")
@@ -56,7 +75,9 @@ func main() {
 	}
 
 	s := grpc.NewServer()
-	pb.RegisterMathServer(s, server{})
+	st := server{}
+	pb.RegisterMathServer(s, st)
+	pb.RegisterNeptuneServer(s, st)
 
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)

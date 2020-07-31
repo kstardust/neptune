@@ -2,10 +2,10 @@ package main
 
 import (
 	"context"
-	pb "go-grpc/src/proto"
 	"io"
 	"log"
 	"math/rand"
+	pb "neptune/src/proto"
 	"time"
 
 	"google.golang.org/grpc"
@@ -18,6 +18,13 @@ func main() {
 	if err != nil {
 		log.Fatalf("cannot connect to server: %", err)
 	}
+
+	nclient := pb.NewNeptuneClient(conn)
+	resp, _ := nclient.CreateRoom(context.Background(), &pb.CreateRoomRequest{Num: 1})
+	log.Printf("createroom: %v", resp)
+
+	resp1, _ := nclient.JoinRoom(context.Background(), &pb.JoinRoomRequest{RoomId: "room"})
+	log.Printf("joinroom: %v", resp1)
 
 	client := pb.NewMathClient(conn)
 	stream, err := client.Max(context.Background())
@@ -46,7 +53,7 @@ func main() {
 		if err := stream.CloseSend(); err != nil {
 			log.Println(err)
 		}
- 	}()
+	}()
 
 	go func() {
 		for {

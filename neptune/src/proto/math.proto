@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package grpc_math;
+package neptune;
 
 service Math {
         rpc Max (stream Request) returns (stream Response) {}

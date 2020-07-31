@@ -20,6 +20,7 @@ message CreateRoomRequest {
 message CreateRoomResponse {
 	ErrorCode code = 1;
 	string RoomId = 2;
+	string Secret = 3;
 }
 
 message StreamResponse {
@@ -32,6 +33,7 @@ message StreamRequest {
 
 message JoinRoomRequest {
 	string RoomId = 1;
+	string Secret = 2;
 }
 
 message JoinRoomResponse {

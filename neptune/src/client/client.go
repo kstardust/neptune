@@ -20,10 +20,10 @@ func main() {
 	}
 
 	nclient := pb.NewNeptuneClient(conn)
-	resp, _ := nclient.CreateRoom(context.Background(), &pb.CreateRoomRequest{Num: 1})
-	log.Printf("createroom: %v", resp)
+	room, _ := nclient.CreateRoom(context.Background(), &pb.CreateRoomRequest{Num: 1})
+	log.Printf("createroom: %v", room)
 
-	resp1, _ := nclient.JoinRoom(context.Background(), &pb.JoinRoomRequest{RoomId: "room"})
+	resp1, _ := nclient.JoinRoom(context.Background(), &pb.JoinRoomRequest{RoomId: room.RoomId, Secret: room.Secret})
 	log.Printf("joinroom: %v", resp1)
 
 	client := pb.NewMathClient(conn)

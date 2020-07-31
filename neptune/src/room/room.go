@@ -12,7 +12,7 @@ type Room struct {
 	Id        RoomId
 	Players   []*player.Player
 	gameLogic GameLogic
-	secret    string
+	Secret    string
 }
 
 var Letters = []rune("abcdefghijklmnopqrstuvwxyz0123456789")
@@ -30,7 +30,7 @@ func newRoom(players uint, roomIdlength uint, logic GameLogic) (*Room, error) {
 	room.Id = RoomId(generateRandomSeq(4))
 	room.Players = make([]*player.Player, 0, players)
 	room.gameLogic = logic
-	room.secret = generateRandomSeq(12)
+	room.Secret = generateRandomSeq(12)
 	return room, nil
 }
 

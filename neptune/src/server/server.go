@@ -12,12 +12,19 @@ import (
 )
 
 type server struct {
-	Rooms map[room.RoomId]room.Room
+	Rooms map[room.RoomId]*room.Room
 }
 
 func (s server) CreateRoom(ctx context.Context, srv *pb.CreateRoomRequest) (*pb.CreateRoomResponse, error) {
 	log.Println("create room %v", srv)
-	return &pb.CreateRoomResponse{RoomId: "xxxx"}, nil
+	r, _ := room.New(nil)
+	for _, ok := s.Rooms[r.Id]; ok; {
+		r, _ = room.New(nil)
+	}
+
+	s.Rooms[r.Id] = r
+
+	return &pb.CreateRoomResponse{RoomId: string(r.Id), Secret: r.Secret}, nil
 }
 
 func (s server) JoinRoom(ctx context.Context, srv *pb.JoinRoomRequest) (*pb.JoinRoomResponse, error) {
@@ -26,8 +33,36 @@ func (s server) JoinRoom(ctx context.Context, srv *pb.JoinRoomRequest) (*pb.Join
 }
 
 func (s server) Stream(srv pb.Neptune_StreamServer) error {
-	log.Println("stream")
-	return nil
+	log.Println("stream begin")
+
+	ctx := srv.Context()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+		}
+
+		req, err := srv.Recv()
+		if err == io.EOF {
+			log.Println("exit")
+			return nil
+		}
+
+		if err != nil {
+			log.Println("receive error: %v", err)
+			continue
+		}
+
+		max = req.Num
+		resp := pb.Response{Result: max}
+		if err := srv.Send(&resp); err != nil {
+			log.Printf("send error %v", err)
+		}
+
+		log.Println("send new max=%d", max)
+	}
 }
 
 func (s server) Max(srv pb.Math_MaxServer) error {
@@ -75,7 +110,7 @@ func main() {
 	}
 
 	s := grpc.NewServer()
-	st := server{}
+	st := server{Rooms: make(map[room.RoomId]*room.Room)}
 	pb.RegisterMathServer(s, st)
 	pb.RegisterNeptuneServer(s, st)
 

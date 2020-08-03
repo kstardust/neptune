@@ -70,15 +70,13 @@ func (r *Room) PlayerCnt() int {
 func (r *Room) PlayerJoin(p Player) error {
 	log.Printf("player [%s] joined room", p.Id())
 	p.SetRoom(r.Id)
-	p.SetStatus(PlayerStatusConnected)
 	r.Players = append(r.Players, p)
 	return nil
 }
 
-func (r *Room) PlayerStopStream(p Player) error {
+func (r *Room) PlayerStopStream(p Player) {
 	log.Printf("player [%s] stop stream", p)
 	p.SetStatus(PlayerStatusDisconnect)
-	return nil
 }
 
 func New() (*Room, error) {

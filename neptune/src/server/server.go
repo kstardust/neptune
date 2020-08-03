@@ -65,6 +65,7 @@ func (s *NeptuneServer) JoinRoom(ctx context.Context, srv *pb.JoinRoomRequest) (
 
 	player, ok := s.Players[room.PlayerId(srv.PlayerId)]
 	if ok {
+		player.SetStatus(room.PlayerStatusConnected)
 		log.Printf("player [%s] is already in room [%s]", player.Id, player.Room())
 		return &pb.JoinRoomResponse{Code: pb.ErrorCode_OK, RoomId: string(player.Room())}, nil
 	}
@@ -76,6 +77,7 @@ func (s *NeptuneServer) JoinRoom(ctx context.Context, srv *pb.JoinRoomRequest) (
 
 	player = s.NewPlayer(room.PlayerId(srv.PlayerId))
 	r.PlayerJoin(player)
+	player.SetStatus(room.PlayerStatusConnected)
 
 	return &pb.JoinRoomResponse{RoomId: string(r.Id)}, nil
 }

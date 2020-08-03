@@ -16,13 +16,17 @@ const (
 
 type Player interface {
 	SendMessage(msg []byte) error
+	Kill()
+
 	SetId(s PlayerId)
 	Id() PlayerId
-	Room() RoomId
+
 	SetStatus(PlayerStatus)
 	Status() PlayerStatus
+
+	Room() RoomId
 	SetRoom(r RoomId)
-	Kill()
+
 	SetRpcBackend(pb.Neptune_StreamServer)
 	RpcBackend() pb.Neptune_StreamServer
 }

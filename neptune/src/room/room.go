@@ -68,18 +68,19 @@ func (r *Room) PlayerCnt() int {
 }
 
 func (r *Room) PlayerJoin(p Player) error {
-	log.Printf("player [%s] join room", p.Id())
+	log.Printf("player [%s] joined room", p.Id())
+	p.SetRoom(r.Id)
+	p.SetStatus(PlayerStatusConnected)
+	r.Players = append(r.Players, p)
 	return nil
 }
 
-func (r *Room) PlayerStopStream(p PlayerId) error {
+func (r *Room) PlayerStopStream(p Player) error {
 	log.Printf("player [%s] stop stream", p)
+	p.SetStatus(PlayerStatusDisconnect)
 	return nil
 }
 
-func joinRoom(RoomId) {
-}
-
-func New(logic GameLogic) (*Room, error) {
+func New() (*Room, error) {
 	return newRoom(2, 4, 100)
 }

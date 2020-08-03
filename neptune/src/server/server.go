@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"context"
@@ -7,84 +7,87 @@ import (
 	"log"
 	pb "neptune/src/proto"
 	"neptune/src/room"
-	"net"
-
-	"google.golang.org/grpc"
 )
 
-type server struct {
+type NeptuneServer struct {
 	Rooms   map[room.RoomId]*room.Room
-	Players map[room.PlayerId]room.RoomId
+	Players map[room.PlayerId]room.Player
+	logic   room.GameLogic
 }
 
-func (s *server) NewRoom() *room.Room {
-	r, _ := room.New(nil)
-	for _, ok := s.Rooms[r.Id]; ok; {
-		r, _ = room.New(nil)
+func NewServer(logic room.GameLogic) *NeptuneServer {
+	return &NeptuneServer{
+		Rooms:   make(map[room.RoomId]*room.Room),
+		Players: make(map[room.PlayerId]room.Player),
+		logic:   logic,
 	}
-
-	s.Rooms[r.Id] = r
-	return r
 }
 
-func (s *server) RegisterPlayer(playerId room.PlayerId, roomId room.RoomId) error {
-	_, exist := s.Players[playerId]
-	if exist {
-		return fmt.Errorf("player %s already in room %s", playerId, roomId)
+func (s *NeptuneServer) NewRoom() *room.Room {
+	if len(s.Rooms) == 0 {
+		r, _ := room.New()
+		s.Rooms[r.Id] = r
 	}
 
-	s.Players[playerId] = roomId
+	for _, v := range s.Rooms {
+		return v
+	}
+	// r, _ := room.New()
+	// for _, ok := s.Rooms[r.Id]; ok; {
+	// 	r, _ = room.New()
+	// }
+
+	// s.Rooms[r.Id] = r
+	// return r
 	return nil
 }
 
-func (s *server) GetRoomOfPlayer(playerId room.PlayerId) *room.Room {
-	roomId, ok := s.Players[playerId]
-	if !ok {
-		return nil
-	}
-
-	return s.Rooms[roomId]
+func (s *NeptuneServer) NewPlayer(playerId room.PlayerId) room.Player {
+	player := room.NewPlayer(playerId)
+	s.Players[playerId] = player
+	return player
 }
 
-func (s *server) CreateRoom(ctx context.Context, srv *pb.CreateRoomRequest) (*pb.CreateRoomResponse, error) {
+func (s *NeptuneServer) RegisterPlayer(player room.Player, roomId room.RoomId) {
+	s.Players[player.Id()] = player
+}
+
+func (s *NeptuneServer) CreateRoom(ctx context.Context, srv *pb.CreateRoomRequest) (*pb.CreateRoomResponse, error) {
 	log.Printf("create room %v", srv)
 
 	r := s.NewRoom()
-	go r.Run(func(room *room.Room) error {
-		log.Printf("start run game logic in room: %s", r.Id)
-		for {
-			resp := <-room.GetInput()
-			log.Printf("input: %v", resp)
-		}
-	})
+	go r.Run(s.logic)
 	return &pb.CreateRoomResponse{RoomId: string(r.Id), Secret: r.Secret}, nil
 }
 
-func (s *server) JoinRoom(ctx context.Context, srv *pb.JoinRoomRequest) (*pb.JoinRoomResponse, error) {
-	log.Printf("player [%s] is trying to join room [%s]", srv.PlayerId,  srv.RoomId)
+func (s *NeptuneServer) JoinRoom(ctx context.Context, srv *pb.JoinRoomRequest) (*pb.JoinRoomResponse, error) {
+	log.Printf("player [%s] is trying to join room [%s]", srv.PlayerId, srv.RoomId)
+
+	player, ok := s.Players[room.PlayerId(srv.PlayerId)]
+	if ok {
+		log.Printf("player [%s] is already in room [%s]", player.Id, player.Room())
+		return &pb.JoinRoomResponse{Code: pb.ErrorCode_OK, RoomId: string(player.Room())}, nil
+	}
+
 	r, ok := s.Rooms[room.RoomId(srv.RoomId)]
 	if !ok {
 		return &pb.JoinRoomResponse{Code: pb.ErrorCode_FAILED}, nil
 	}
 
-	roomId, ok := s.Players[room.PlayerId(srv.PlayerId)]
-	if ok {
-		return &pb.JoinRoomResponse{Code: pb.ErrorCode_FAILED, RoomId: string(roomId)}, nil
-	}
-
-	player := room.NewBasicPlayer(room.PlayerId(srv.PlayerId))
-	s.RegisterPlayer(player.Id(), r.Id)
+	player = s.NewPlayer(room.PlayerId(srv.PlayerId))
 	r.PlayerJoin(player)
+
 	return &pb.JoinRoomResponse{RoomId: string(r.Id)}, nil
 }
 
-func (s *server) Stream(srv pb.Neptune_StreamServer) error {
+func (s *NeptuneServer) Stream(srv pb.Neptune_StreamServer) error {
 	log.Println("stream begin")
 
 	ctx := srv.Context()
 
 	var room_ *room.Room
-	
+	var player room.Player
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -105,77 +108,32 @@ func (s *server) Stream(srv pb.Neptune_StreamServer) error {
 
 		if room_ == nil {
 			playerId := room.PlayerId(req.PlayerId)
-			room_ = s.GetRoomOfPlayer(playerId)
+			var ok bool
+			player, ok = s.Players[playerId]
 
-			if room_ == nil {
-				msg := fmt.Sprintf("cannot locate player: %v", playerId)
+			if !ok {
+				msg := fmt.Sprintf("no such player: %v", playerId)
 				log.Println(msg)
 				return fmt.Errorf(msg)
 			}
 
+			room_, ok = s.Rooms[player.Room()]
+
+			if room_ == nil {
+				msg := fmt.Sprintf("no such room %v for player: %v", player.Room(), playerId)
+				log.Println(msg)
+				return fmt.Errorf(msg)
+			}
+
+			player.SetStatus(room.PlayerStatusStreaming)
+			player.SetRpcBackend(srv)
+
 			defer func() {
-				room_.PlayerStopStream(playerId)
+				room_.PlayerStopStream(player)
 			}()
 		}
 
 		room_.Input() <- req
 	}
 	return nil
-}
-
-func (s *server) Max(srv pb.Math_MaxServer) error {
-	log.Println("start new server")
-	var max int32
-
-	ctx := srv.Context()
-
-	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		default:
-		}
-
-		req, err := srv.Recv()
-		if err == io.EOF {
-			log.Println("exit")
-			return nil
-		}
-
-		if err != nil {
-			log.Println("receive error: %v", err)
-			continue
-		}
-
-		if req.Num <= max {
-			continue
-		}
-
-		max = req.Num
-		resp := pb.Response{Result: max}
-		if err := srv.Send(&resp); err != nil {
-			log.Printf("send error %v", err)
-		}
-
-		log.Println("send new max=%d", max)
-	}
-}
-
-func main() {
-	lis, err := net.Listen("tcp", ":5005")
-	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
-	}
-
-	s := grpc.NewServer()
-	st := &server{
-		Rooms:   make(map[room.RoomId]*room.Room),
-		Players: make(map[room.PlayerId]room.RoomId),
-	}
-	//	pb.RegisterMathServer(s, st)
-	pb.RegisterNeptuneServer(s, st)
-
-	if err := s.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %v", err)
-	}
 }

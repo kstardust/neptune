@@ -12,7 +12,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-func main() {
+func client(playerId string) {
 	rand.Seed(time.Now().Unix())
 
 	conn, err := grpc.Dial(":5005", grpc.WithInsecure())
@@ -24,7 +24,6 @@ func main() {
 	room, _ := nclient.CreateRoom(context.Background(), &pb.CreateRoomRequest{Num: 1})
 	log.Printf("createroom: %v", room)
 
-	playerId := "player1"
 	resp1, _ := nclient.JoinRoom(context.Background(),
 		&pb.JoinRoomRequest{PlayerId: playerId, RoomId: room.RoomId, Secret: room.Secret})
 	log.Printf("joinroom: %v", resp1)
@@ -66,7 +65,7 @@ func main() {
 			if err != nil {
 				log.Fatal("cannot receive: %v", err)
 			}
-			log.Println("%v received", resp)
+			log.Printf("%v received %v", playerId, resp)
 		}
 	}()
 
@@ -80,4 +79,9 @@ func main() {
 
 	<-done
 	log.Printf("finished")
+}
+
+func main() {
+	go client("player1")
+	client("player2")
 }

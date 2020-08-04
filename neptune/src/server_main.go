@@ -20,11 +20,21 @@ func main() {
 	st := server.NewServer(func(r *room.Room) error {
 		log.Printf("start run game logic in room: %s", r.Id)
 		for {
-			req := <-r.GetInput()
-			log.Printf("input: %v", req)
-			for _, p := range r.Players {
-				p.SendMessage(req.GetPayload())
+			select {
+			case <-r.Ctx.Done():
+				return r.Ctx.Err()
+			default:
 			}
+
+			select {
+			case req := <-r.GetInput():
+				for _, p := range r.Players {
+					p.SendMessage(req.GetPayload())
+				}
+				log.Printf("input: %v", req)
+			}
+
+			return nil
 		}
 	})
 

@@ -23,9 +23,10 @@ func NewServer(logic room.GameLogic) *NeptuneServer {
 	}
 }
 
-func (s *NeptuneServer) NewRoom() *room.Room {
+func (s *NeptuneServer) NewRoom(ctx context.Context) *room.Room {
 	if len(s.Rooms) == 0 {
 		r, _ := room.New()
+		r.Ctx = ctx
 		s.Rooms[r.Id] = r
 	}
 
@@ -37,6 +38,7 @@ func (s *NeptuneServer) NewRoom() *room.Room {
 	// 	r, _ = room.New()
 	// }
 
+	// r.Ctx = ctx
 	// s.Rooms[r.Id] = r
 	// return r
 	return nil
@@ -52,11 +54,24 @@ func (s *NeptuneServer) RegisterPlayer(player room.Player, roomId room.RoomId) {
 	s.Players[player.Id()] = player
 }
 
+func (s *NeptuneServer) ClearRoom(r *room.Room) {
+	for _, player := range r.Players {
+		delete(s.Players, player.Id())
+	}
+
+	delete(s.Rooms, r.Id)
+}
+
 func (s *NeptuneServer) CreateRoom(ctx context.Context, srv *pb.CreateRoomRequest) (*pb.CreateRoomResponse, error) {
 	log.Printf("create room %v", srv)
 
-	r := s.NewRoom()
-	go r.Run(s.logic)
+	roomCtx, cancel := context.WithCancel(context.Background())
+	r := s.NewRoom(roomCtx)
+
+	go r.Run(s.logic, func() {
+		cancel()
+		s.ClearRoom(r)
+	})
 	return &pb.CreateRoomResponse{RoomId: string(r.Id), Secret: r.Secret}, nil
 }
 
@@ -91,7 +106,17 @@ func (s *NeptuneServer) Stream(srv pb.Neptune_StreamServer) error {
 	var player room.Player
 
 	for {
+		if room_ != nil {
+			// room logic ctx done
+			select {
+			case <-room_.Ctx.Done():
+				return ctx.Err()
+			default:
+			}
+		}
+
 		select {
+		// stream ctx done
 		case <-ctx.Done():
 			return ctx.Err()
 		default:

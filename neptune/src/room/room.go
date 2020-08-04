@@ -1,18 +1,21 @@
 package room
 
 import (
+	"context"
 	"log"
 	"math/rand"
 	pb "neptune/src/proto"
 )
 
 type RoomId string
-type GameLogic = func(room *Room) error
+type GameLogic = func(*Room) error
+type ClearCallback = func()
 
 type Room struct {
 	Id      RoomId
 	Players []Player
 	Secret  string
+	Ctx     context.Context
 	input   chan *pb.StreamRequest
 	running bool
 }
@@ -44,7 +47,7 @@ func (r *Room) GetInput() <-chan *pb.StreamRequest {
 	return r.input
 }
 
-func (r *Room) Run(logic GameLogic) {
+func (r *Room) Run(logic GameLogic, closeCallback ClearCallback) {
 	if r.running {
 		log.Println("this room is already running its logic.")
 		return
@@ -52,6 +55,7 @@ func (r *Room) Run(logic GameLogic) {
 	log.Println("start to run game logic")
 	defer func() {
 		// TODO: recover from panic
+		closeCallback()
 		log.Println("game logic end")
 	}()
 

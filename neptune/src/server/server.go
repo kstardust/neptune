@@ -50,6 +50,10 @@ func (s *NeptuneServer) NewPlayer(playerId room.PlayerId) room.Player {
 	return player
 }
 
+func (s *NeptuneServer) RemovePlayer(playerId room.PlayerId) {
+	delete(s.Players, playerId)
+}
+
 func (s *NeptuneServer) RegisterPlayer(player room.Player, roomId room.RoomId) {
 	s.Players[player.Id()] = player
 }
@@ -91,7 +95,12 @@ func (s *NeptuneServer) JoinRoom(ctx context.Context, srv *pb.JoinRoomRequest) (
 	}
 
 	player = s.NewPlayer(room.PlayerId(srv.PlayerId))
-	r.PlayerJoin(player)
+	if err := r.PlayerJoin(player); err != nil {
+		log.Printf("join room error: %v", err)
+		s.RemovePlayer(player.Id())
+		return &pb.JoinRoomResponse{Code: pb.ErrorCode_FAILED}, nil
+	}
+
 	player.SetStatus(room.PlayerStatusConnected)
 
 	return &pb.JoinRoomResponse{RoomId: string(r.Id)}, nil

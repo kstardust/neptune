@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+import "error.proto";
+
+package discovery;
+
+service Discovery {
+        rpc Keepalive (stream KeepaliveRequest) returns (stream Servers) {}
+	rpc Register (Server) returns (RegisterResponse) {}
+}
+
+message RegisterResponse {
+  Error.CommonError Error = 1;
+  int32 Keepalive = 2;
+}
+
+message KeepaliveRequest {
+  int32 Id = 1;
+}
+
+message Server {
+  string Type = 1;
+  int32 Id = 2;
+}
+
+message Servers {
+  Error.CommonError Error = 1;
+  repeated Server Servers = 2;
+}

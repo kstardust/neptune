@@ -1,17 +1,20 @@
 import grpc.experimental.aio as agrpc
 import asyncio
 import concurrent
-import collections
 from datetime import (datetime, timedelta)
 from neptune_py.proto import discovery_service_pb2
 from neptune_py.proto import error_pb2
 from neptune_py.proto import discovery_service_pb2_grpc
 
 
-Peer = collections.namedtuple('Peer', ['pid', 'last_seen', 'data'])
+class Server:
+    def __init__(self, pid, data):
+        self.pid = pid
+        self.data = data
+        self.last_seen = datetime.now()
 
 
-class PeerManager:
+class ServerList:
     def __init__(self, ttl=timedelta(seconds=10)):
         self.ttl = ttl
         self._peers = {}
@@ -28,7 +31,7 @@ class PeerManager:
         self.expire()
         if id_ in self._peers:
             return False
-        self._peers[id_] = Peer(pid=id_, data=data, last_seen=datetime.now())
+        self._peers[id_] = Server(pid=id_, data=data)
         return True
 
     def keepalive(self, id_):
@@ -40,7 +43,7 @@ class PeerManager:
         return True
 
     @property
-    def peers(self):
+    def servers(self):
         self.expire()
         return [v.data for v in self._peers.values()]
 
@@ -48,12 +51,12 @@ class PeerManager:
 class DiscoveryService(discovery_service_pb2_grpc.DiscoveryServicer):
 
     def __init__(self, ttl=timedelta(seconds=10)):
-        self.peer_manager = PeerManager(ttl)
+        self.server_list = ServerList(ttl)
         self._peers = {}
 
     async def Register(self, request, context):
         print("Register", request)
-        if self.peer_manager.register(request.Id, request):
+        if self.server_list.register(request.Id, request):
             return discovery_service_pb2.RegisterResponse(
                 Error=error_pb2.CommonError(
                     Code=error_pb2.FAILED,
@@ -62,21 +65,23 @@ class DiscoveryService(discovery_service_pb2_grpc.DiscoveryServicer):
             )
         return discovery_service_pb2.RegisterResponse(
             Error=error_pb2.CommonError(),
-            Keepalive=self.peer_manager._keepalive.total_seconds()
+            Keepalive=int(self.server_list.ttl.total_seconds())
         )
 
     async def _keepalive_reader(self, request_iterator):
         async for request in request_iterator:
-            self.peer_manager.keepalive(request.Id)
+            print(request)
+            self.server_list.keepalive(request.Id)
 
     async def Keepalive(self, request_iterator, context):
-        print("hello")
+        print("keepalive start")
         input_ = asyncio.create_task(self._keepalive_reader(request_iterator))
         while True:
             yield discovery_service_pb2.Servers(
-                Servers=self.peer_manager.peers
+                Error=error_pb2.CommonError(),
+                Servers=self.server_list.servers
             )
-            await asyncio.sleep(self.peer_manager.ttl.total_seconds())
+            await asyncio.sleep(self.server_list.ttl.total_seconds())
         # await context.abort(grpc.StatusCode.CANCELLED)
         await input_
 
@@ -91,8 +96,3 @@ async def serve():
 
 if __name__ == '__main__':
     asyncio.run(serve())
-    pm = PeerManager()
-    for i in range(10):
-        pm.register(i, {"data": i})
-    for p in pm.peers:
-        print(p)

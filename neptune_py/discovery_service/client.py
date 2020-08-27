@@ -4,9 +4,9 @@ from neptune_py.proto import discovery_service_pb2
 from neptune_py.proto import discovery_service_pb2_grpc
 
 
-def request_stream():
+async def request_stream(stream):
     for i in range(10):
-        yield discovery_service_pb2.KeepaliveRequest(Id=13)
+        await stream.write(discovery_service_pb2.KeepaliveRequest(Id=13))
 
 
 async def request():
@@ -19,7 +19,7 @@ async def request():
     print(result.Error.Code, result.Keepalive)
 
     stream = stub.Keepalive()
-    await stream.write(discovery_service_pb2.KeepaliveRequest(Id=13))
+    await request_stream(stream)
     await stream.done_writing()
     while True:
         response = await stream.read()
@@ -29,4 +29,6 @@ async def request():
 
 
 if __name__ == '__main__':
+    import types, neptune_py
+    print({k: v for k, v in neptune_py.proto.__dict__.items() if isinstance(v, types.ModuleType) and k.endswith('_grpc')})
     asyncio.run(request())

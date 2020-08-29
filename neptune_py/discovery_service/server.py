@@ -56,7 +56,7 @@ class DiscoveryService(discovery_service_pb2_grpc.DiscoveryServicer):
 
     async def Register(self, request, context):
         print("Register", request)
-        if self.server_list.register(request.Id, request):
+        if not self.server_list.register(request.Id, request):
             return discovery_service_pb2.RegisterResponse(
                 Error=error_pb2.CommonError(
                     Code=error_pb2.FAILED,

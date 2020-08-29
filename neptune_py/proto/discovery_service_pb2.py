@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x17\x64iscovery_service.proto\x12\tdiscovery\x1a\x0b\x65rror.proto\"H\n\x10RegisterResponse\x12!\n\x05\x45rror\x18\x01 \x01(\x0b\x32\x12.Error.CommonError\x12\x11\n\tKeepalive\x18\x02 \x01(\x05\"\x1e\n\x10KeepaliveRequest\x12\n\n\x02Id\x18\x01 \x01(\x05\"\"\n\x06Server\x12\x0c\n\x04Type\x18\x01 \x01(\t\x12\n\n\x02Id\x18\x02 \x01(\x05\"P\n\x07Servers\x12!\n\x05\x45rror\x18\x01 \x01(\x0b\x32\x12.Error.CommonError\x12\"\n\x07Servers\x18\x02 \x03(\x0b\x32\x11.discovery.Server2\x8d\x01\n\tDiscovery\x12\x42\n\tKeepalive\x12\x1b.discovery.KeepaliveRequest\x1a\x12.discovery.Servers\"\x00(\x01\x30\x01\x12<\n\x08Register\x12\x11.discovery.Server\x1a\x1b.discovery.RegisterResponse\"\x00\x62\x06proto3'
+  serialized_pb=b'\n\x17\x64iscovery_service.proto\x12\tdiscovery\x1a\x0b\x65rror.proto\"H\n\x10RegisterResponse\x12!\n\x05\x45rror\x18\x01 \x01(\x0b\x32\x12.Error.CommonError\x12\x11\n\tKeepalive\x18\x02 \x01(\x05\"\x1e\n\x10KeepaliveRequest\x12\n\n\x02Id\x18\x01 \x01(\x05\"3\n\x06Server\x12\x0c\n\x04Type\x18\x01 \x01(\t\x12\n\n\x02Id\x18\x02 \x01(\x05\x12\x0f\n\x07\x41\x64\x64ress\x18\x03 \x01(\t\"P\n\x07Servers\x12!\n\x05\x45rror\x18\x01 \x01(\x0b\x32\x12.Error.CommonError\x12\"\n\x07Servers\x18\x02 \x03(\x0b\x32\x11.discovery.Server2\x8d\x01\n\tDiscovery\x12\x42\n\tKeepalive\x12\x1b.discovery.KeepaliveRequest\x1a\x12.discovery.Servers\"\x00(\x01\x30\x01\x12<\n\x08Register\x12\x11.discovery.Server\x1a\x1b.discovery.RegisterResponse\"\x00\x62\x06proto3'
   ,
   dependencies=[error__pb2.DESCRIPTOR,])
 
@@ -120,6 +120,13 @@ _SERVER = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='Address', full_name='discovery.Server.Address', index=2,
+      number=3, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
   ],
   extensions=[
   ],
@@ -133,7 +140,7 @@ _SERVER = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=157,
-  serialized_end=191,
+  serialized_end=208,
 )
 
 
@@ -171,8 +178,8 @@ _SERVERS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=193,
-  serialized_end=273,
+  serialized_start=210,
+  serialized_end=290,
 )
 
 _REGISTERRESPONSE.fields_by_name['Error'].message_type = error__pb2._COMMONERROR
@@ -221,8 +228,8 @@ _DISCOVERY = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=276,
-  serialized_end=417,
+  serialized_start=293,
+  serialized_end=434,
   methods=[
   _descriptor.MethodDescriptor(
     name='Keepalive',

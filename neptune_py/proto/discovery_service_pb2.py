@@ -20,11 +20,43 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x17\x64iscovery_service.proto\x12\tdiscovery\x1a\x0b\x65rror.proto\"H\n\x10RegisterResponse\x12!\n\x05\x45rror\x18\x01 \x01(\x0b\x32\x12.Error.CommonError\x12\x11\n\tKeepalive\x18\x02 \x01(\x05\"\x1e\n\x10KeepaliveRequest\x12\n\n\x02Id\x18\x01 \x01(\x05\"3\n\x06Server\x12\x0c\n\x04Type\x18\x01 \x01(\t\x12\n\n\x02Id\x18\x02 \x01(\x05\x12\x0f\n\x07\x41\x64\x64ress\x18\x03 \x01(\t\"P\n\x07Servers\x12!\n\x05\x45rror\x18\x01 \x01(\x0b\x32\x12.Error.CommonError\x12\"\n\x07Servers\x18\x02 \x03(\x0b\x32\x11.discovery.Server2\x8d\x01\n\tDiscovery\x12\x42\n\tKeepalive\x12\x1b.discovery.KeepaliveRequest\x1a\x12.discovery.Servers\"\x00(\x01\x30\x01\x12<\n\x08Register\x12\x11.discovery.Server\x1a\x1b.discovery.RegisterResponse\"\x00\x62\x06proto3'
+  serialized_pb=b'\n\x17\x64iscovery_service.proto\x12\tdiscovery\x1a\x0b\x65rror.proto\"\x16\n\x07\x45\x63hoMsg\x12\x0b\n\x03Msg\x18\x01 \x01(\t\"H\n\x10RegisterResponse\x12!\n\x05\x45rror\x18\x01 \x01(\x0b\x32\x12.Error.CommonError\x12\x11\n\tKeepalive\x18\x02 \x01(\x05\"\x1e\n\x10KeepaliveRequest\x12\n\n\x02Id\x18\x01 \x01(\x05\"3\n\x06Server\x12\x0c\n\x04Type\x18\x01 \x01(\t\x12\n\n\x02Id\x18\x02 \x01(\x05\x12\x0f\n\x07\x41\x64\x64ress\x18\x03 \x01(\t\"P\n\x07Servers\x12!\n\x05\x45rror\x18\x01 \x01(\x0b\x32\x12.Error.CommonError\x12\"\n\x07Servers\x18\x02 \x03(\x0b\x32\x11.discovery.Server2\xbf\x01\n\tDiscovery\x12\x42\n\tKeepalive\x12\x1b.discovery.KeepaliveRequest\x1a\x12.discovery.Servers\"\x00(\x01\x30\x01\x12<\n\x08Register\x12\x11.discovery.Server\x1a\x1b.discovery.RegisterResponse\"\x00\x12\x30\n\x04\x45\x63ho\x12\x12.discovery.EchoMsg\x1a\x12.discovery.EchoMsg\"\x00\x62\x06proto3'
   ,
   dependencies=[error__pb2.DESCRIPTOR,])
 
 
+
+
+_ECHOMSG = _descriptor.Descriptor(
+  name='EchoMsg',
+  full_name='discovery.EchoMsg',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='Msg', full_name='discovery.EchoMsg.Msg', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=51,
+  serialized_end=73,
+)
 
 
 _REGISTERRESPONSE = _descriptor.Descriptor(
@@ -61,8 +93,8 @@ _REGISTERRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=51,
-  serialized_end=123,
+  serialized_start=75,
+  serialized_end=147,
 )
 
 
@@ -93,8 +125,8 @@ _KEEPALIVEREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=125,
-  serialized_end=155,
+  serialized_start=149,
+  serialized_end=179,
 )
 
 
@@ -139,8 +171,8 @@ _SERVER = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=157,
-  serialized_end=208,
+  serialized_start=181,
+  serialized_end=232,
 )
 
 
@@ -178,18 +210,26 @@ _SERVERS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=210,
-  serialized_end=290,
+  serialized_start=234,
+  serialized_end=314,
 )
 
 _REGISTERRESPONSE.fields_by_name['Error'].message_type = error__pb2._COMMONERROR
 _SERVERS.fields_by_name['Error'].message_type = error__pb2._COMMONERROR
 _SERVERS.fields_by_name['Servers'].message_type = _SERVER
+DESCRIPTOR.message_types_by_name['EchoMsg'] = _ECHOMSG
 DESCRIPTOR.message_types_by_name['RegisterResponse'] = _REGISTERRESPONSE
 DESCRIPTOR.message_types_by_name['KeepaliveRequest'] = _KEEPALIVEREQUEST
 DESCRIPTOR.message_types_by_name['Server'] = _SERVER
 DESCRIPTOR.message_types_by_name['Servers'] = _SERVERS
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
+
+EchoMsg = _reflection.GeneratedProtocolMessageType('EchoMsg', (_message.Message,), {
+  'DESCRIPTOR' : _ECHOMSG,
+  '__module__' : 'discovery_service_pb2'
+  # @@protoc_insertion_point(class_scope:discovery.EchoMsg)
+  })
+_sym_db.RegisterMessage(EchoMsg)
 
 RegisterResponse = _reflection.GeneratedProtocolMessageType('RegisterResponse', (_message.Message,), {
   'DESCRIPTOR' : _REGISTERRESPONSE,
@@ -228,8 +268,8 @@ _DISCOVERY = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=293,
-  serialized_end=434,
+  serialized_start=317,
+  serialized_end=508,
   methods=[
   _descriptor.MethodDescriptor(
     name='Keepalive',
@@ -248,6 +288,16 @@ _DISCOVERY = _descriptor.ServiceDescriptor(
     containing_service=None,
     input_type=_SERVER,
     output_type=_REGISTERRESPONSE,
+    serialized_options=None,
+    create_key=_descriptor._internal_create_key,
+  ),
+  _descriptor.MethodDescriptor(
+    name='Echo',
+    full_name='discovery.Discovery.Echo',
+    index=2,
+    containing_service=None,
+    input_type=_ECHOMSG,
+    output_type=_ECHOMSG,
     serialized_options=None,
     create_key=_descriptor._internal_create_key,
   ),

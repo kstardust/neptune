@@ -1,32 +1,11 @@
-import grpc.experimental.aio as agrpc
-from datetime import (datetime, timedelta)
+from datetime import (timedelta)
 from neptune_py.proto import discovery_service_pb2
-from neptune_py.proto import error_pb2
 from neptune_py.proto import discovery_service_pb2_grpc
-
-from . skeleton import NeptuneServiceSkeleton
-
-
-class NeptuneGRPCService(NeptuneServiceSkeleton):
-    def add_to_server(self):
-        raise NotImplementedError()
+from neptune_py.proto import error_pb2
+from neptune_py.skeleton.grpc_service import NeptuneGRPCService
 
 
-class GRPCServerService(NeptuneServiceSkeleton):
-    def __init__(self, bind_address):
-        super().__init__("grpc")
-        self.bind_address = bind_address
-
-    def init(self):
-        self.server = agrpc.server()
-        self.server.add_insecure_port(self.bind_address)
-
-    async def logic(self):
-        await self.server.start()
-        await self.server.wait_for_termination()
-
-    def add_service(self, grpc_service: NeptuneGRPCService):
-        grpc_service.add_to_server(self)
+from . server_list import ServerList
 
 
 class DiscoveryService(
@@ -35,7 +14,7 @@ class DiscoveryService(
 
     def __init__(self, ttl=timedelta(seconds=10)):
         super().__init__("DiscoveryService")
-        self.server_list = None #ServerList(ttl)
+        self.server_list = ServerList(ttl)
         self._peers = {}
 
     def init(self):
@@ -43,7 +22,7 @@ class DiscoveryService(
 
     @property
     def add_to_server(self):
-        return lambda x: discovery_service_pb2.add_DiscoveryServicer_to_server(
+        return lambda x: discovery_service_pb2_grpc.add_DiscoveryServicer_to_server(
             self, x
         )
 
@@ -68,12 +47,30 @@ class DiscoveryService(
 
     async def Keepalive(self, request_iterator, context):
         print("keepalive start")
-        input_ = asyncio.create_task(self._keepalive_reader(request_iterator))
-        while True:
-            yield discovery_service_pb2.Servers(
-                Error=error_pb2.CommonError(),
-                Servers=self.server_list.servers
-            )
-            await asyncio.sleep(self.server_list.ttl.total_seconds())
-        # await context.abort(grpc.StatusCode.CANCELLED)
-        await input_
+        # input_ = asyncio.create_task(self._keepalive_reader(request_iterator))
+        # while True:
+        #     yield discovery_service_pb2.Servers(
+        #         Error=error_pb2.CommonError(),
+        #         Servers=self.server_list.servers
+        #     )
+        #     await asyncio.sleep(self.server_list.ttl.total_seconds())
+        # # await context.abort(grpc.StatusCode.CANCELLED)
+        # await input_
+
+    async def Echo(self, request, context):
+        return request
+
+import asyncio
+from neptune_py.skeleton.grpc_service import GRPCServerService
+from neptune_py.skeleton.skeleton import NeptuneServerSkeleton
+
+
+if __name__ == '__main__':
+    grpc_service = GRPCServerService("0.0.0.0:1313")
+    discovery_service = DiscoveryService()
+    np_server = NeptuneServerSkeleton("abc")
+    grpc_service.add_service(discovery_service)
+
+    np_server.add_service(grpc_service)
+    np_server.add_service(discovery_service)
+    asyncio.run(np_server.run())

@@ -7,6 +7,11 @@ package discovery;
 service Discovery {
         rpc Keepalive (stream KeepaliveRequest) returns (stream Servers) {}
 	rpc Register (Server) returns (RegisterResponse) {}
+	rpc Echo (EchoMsg) returns (EchoMsg) {}
+}
+
+message EchoMsg {
+  string Msg = 1;
 }
 
 message RegisterResponse {

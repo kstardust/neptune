@@ -24,6 +24,11 @@ class DiscoveryStub(object):
                 request_serializer=discovery__service__pb2.Server.SerializeToString,
                 response_deserializer=discovery__service__pb2.RegisterResponse.FromString,
                 )
+        self.Echo = channel.unary_unary(
+                '/discovery.Discovery/Echo',
+                request_serializer=discovery__service__pb2.EchoMsg.SerializeToString,
+                response_deserializer=discovery__service__pb2.EchoMsg.FromString,
+                )
 
 
 class DiscoveryServicer(object):
@@ -41,6 +46,12 @@ class DiscoveryServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def Echo(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_DiscoveryServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -53,6 +64,11 @@ def add_DiscoveryServicer_to_server(servicer, server):
                     servicer.Register,
                     request_deserializer=discovery__service__pb2.Server.FromString,
                     response_serializer=discovery__service__pb2.RegisterResponse.SerializeToString,
+            ),
+            'Echo': grpc.unary_unary_rpc_method_handler(
+                    servicer.Echo,
+                    request_deserializer=discovery__service__pb2.EchoMsg.FromString,
+                    response_serializer=discovery__service__pb2.EchoMsg.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -95,5 +111,22 @@ class Discovery(object):
         return grpc.experimental.unary_unary(request, target, '/discovery.Discovery/Register',
             discovery__service__pb2.Server.SerializeToString,
             discovery__service__pb2.RegisterResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def Echo(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/discovery.Discovery/Echo',
+            discovery__service__pb2.EchoMsg.SerializeToString,
+            discovery__service__pb2.EchoMsg.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

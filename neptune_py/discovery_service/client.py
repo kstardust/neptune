@@ -4,21 +4,6 @@ from neptune_py.proto import discovery_service_pb2
 from neptune_py.proto import discovery_service_pb2_grpc
 
 
-class Task:
-    def __init__(self):
-        self._tasks = []
-
-    def add_task(self, task):
-        task = asyncio.create_task(self._tasks.append(task))
-
-    def cancel_all_tasks(self):
-        try:
-            for task in self._tasks:
-                task.cancel()
-        except asyncio.CancelledError as e:
-            print(e)
-
-
 class DiscoveryServiceClient:
     def __init__(self, server_address, sid, stype, address):
         self.server_address = server_address
@@ -59,6 +44,10 @@ class DiscoveryServiceClient:
         request = discovery_service_pb2.Server(
             Type=self.stype, Id=self.sid, Address=self.address
         )
+
+        result = await self.grpc_stub.Echo(discovery_service_pb2.EchoMsg(Msg="hello"))
+        print(result)
+        return
         result = await self.grpc_stub.Register(request)
 
         if result.Error.Code:
@@ -80,7 +69,10 @@ async def request():
     stub = discovery_service_pb2_grpc.DiscoveryStub(channel)
 
     request = discovery_service_pb2.Server(Type="type_any", Id=13)
-    result = await stub.Register(request)
+    result = await stub.Echo("hello")
+    print(result)
+    return
+#    result = await stub.Register(request)
     print(result.Error.Code, result.Keepalive)
 
     stream = stub.Keepalive()

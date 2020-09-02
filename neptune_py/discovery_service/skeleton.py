@@ -3,81 +3,144 @@ import logging
 import asyncio
 
 
-class NeptuneService:
-    def __init__(self, server, name=None):
-        self.name = uuid.uuid4() if name is None else name
-        self.server = server
-        self._inited = False
+class NeptuneServiceSkeleton:
+    class ServiceStatus:
+        NEW = 1
+        INITED = 2
+        RUNNING = 3
+        FINISHED = 4
+
+    def __init__(self, name=None):
+        self.name = str(uuid.uuid4()) if name is None else name
+        self._status = NeptuneServiceSkeleton.ServiceStatus.NEW
         self._logic_task = None
+
+    def get_logger(self):
+        return self.server.get_logger(self.name)
+
+    def init_service(self, server):
+        if self._status != NeptuneServiceSkeleton.ServiceStatus.NEW:
+            return
+        self._status = NeptuneServiceSkeleton.ServiceStatus.INITED
+        self.server = server
+        self.init()
 
     def init(self):
         """
         init service
         """
-        if self._inited:
-            return
-
-        self._inited = True
-        print(f"init service {self.name}")
+        self.get_logger().debug(f"init service {self.name}")
 
     async def logic(self):
         """
         service logic
         """
-        print(f"logic fun {self.name}")
+        self.server.get_logger().debug(f"logic fun {self.name}")
         await asyncio.sleep(10)
-        pass
 
-    async def finished(self):
+    async def finish_service(self):
+        if self._status != NeptuneServiceSkeleton.ServiceStatus.RUNNING:
+            self.server.get_logger().error(f"service {self.name} is not running")
+            return
+        else:
+            await self.finish()
+
+    async def finish(self):
         """
         service finished
         """
-        print(f"finished fun {self.name}")
-        pass
+        self.server.get_logger().debug(f"finished fun {self.name}")
 
     async def run(self):
-        self.init()
+        assert self._status == NeptuneServiceSkeleton.ServiceStatus.INITED
+        self._status = NeptuneServiceSkeleton.ServiceStatus.RUNNING
         try:
-            self._logic_task = asyncio.wait_for(self.logic(), None)
+            self._logic_task = asyncio.create_task(self.logic())
             await self._logic_task
         except Exception as e:
             if isinstance(e, asyncio.CancelledError):
-                print(f'service {self.name} was cancelled')
+                self.server.get_logger().debug(f'service {self.name} was cancelled')
             else:
                 raise e
         finally:
-            await self.finished()
-            print(f'service {self.name} finished')
+            await self.finish_service()
+            self.server.get_logger().debug(f'service {self.name} finished')
 
     def stop(self):
-        if self._logic_task is not None and self._logic_task.done():
+        if self._logic_task is not None and not self._logic_task.done():
             self._logic_task.cancel()
 
 
-class NeptuneServer:
-    def __init__(self):
+class NeptuneServerSkeleton:
+    def __init__(self, server_name):
         self.services = set()
+        self.server_name = server_name
+        self._init_logger()
 
-    def add_service(self, service: NeptuneService):
+    def _init_logger(self):
+        logging.basicConfig(
+            level=logging.DEBUG,
+            format="[%(levelname)s][%(name)s %(asctime)s]:%(message)s"
+        )
+
+    def get_logger(self, name=None):
+        return logging.getLogger(
+            name if name is not None else self.server_name
+        )
+
+    def add_service(self, service: NeptuneServiceSkeleton):
         self.services.add(service)
 
-    def init():
-        pass
+    def init_services(self):
+        for service in self.services:
+            service.init_service(self)
 
     async def run(self):
-        for service in self.services:
-            service.init()
-
+        self.init_services()
         ret = await asyncio.gather(
             *(service.run() for service in self.services),
-            return_exceptions=True
         )
-        print(ret)
+        self.get_logger().debug(f"gathered all task {ret}")
+
+
+# class NeptuneServiceDecorator(NeptuneServiceSkeleton):
+#     '''
+#     a simple wrapper for converting class to neptune service
+#     (avoid multiple inheritance)
+#     '''
+#     def __init__(self, name, backend_obj):
+#         super().__init__(name)
+#         self._backend_obj = backend_obj
+
+#     async def logic(self):
+#         logic = getattr(self._backend_obj, 'logic', None)
+#         if logic is not None:
+#             await logic()
+#         else:
+#             await super.logic()
+
+#     async def finish(self):
+#         finish = getattr(self._backend_obj, 'finish', None)
+#         if finish is not None:
+#             await finish()
+#         else:
+#             await super().finish()
+
+#     def init(self):
+#         init = getattr(self._backend_obj, 'init', None)
+#         if init is not None:
+#             init()
+#         else:
+#             super().init()
+
+from . grpc_service import DiscoveryService
+from . grpc_service import GRPCServerService
 
 async def main():
-    server = NeptuneServer()
-    server.add_service(NeptuneService(server))
-    server.add_service(NeptuneService(server))
+    server = NeptuneServerSkeleton("neptune")
+    server.add_service(NeptuneServiceSkeleton())
+    server.add_service(NeptuneServiceSkeleton())
     await server.run()
+
 
 asyncio.run(main())

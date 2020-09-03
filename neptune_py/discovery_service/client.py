@@ -10,13 +10,6 @@ class DiscoveryServiceClient:
         self.address = address
         self.stype = stype
         self.sid = sid
-        self._done = False
-
-    def done(self):
-        self._done = True
-
-    def is_done(self):
-        return self._done
 
     async def _keepalive(self, interval):
         stream = self.grpc_stub.Keepalive()
@@ -47,15 +40,14 @@ class DiscoveryServiceClient:
 
         result = await self.grpc_stub.Echo(discovery_service_pb2.EchoMsg(Msg="hello"))
         print(result)
-        return
         result = await self.grpc_stub.Register(request)
 
         if result.Error.Code:
             print(f"--------------error {result}")
             return
-
-        keepalive_task = self._keepalive(result.Keepalive)
-        await keepalive_task
+        print(result)
+        # keepalive_task = self._keepalive(result.Keepalive)
+        # await keepalive_task
 
 
 async def request_stream(stream):

@@ -25,6 +25,9 @@ class GRPCServerService(NeptuneServiceSkeleton):
         await self.grpc_server.start()
         await self.grpc_server.wait_for_termination()
 
+    async def finish(self):
+        await self.grpc_server.stop(None)
+
     def add_service(self, grpc_service: NeptuneGRPCService):
         # postpone add_to_server until self.grpc_server was created,
         self._services.add(grpc_service)

@@ -50,15 +50,15 @@ class DiscoveryService(
 
     async def Keepalive(self, request_iterator, context):
         print("keepalive start")
-        # input_ = asyncio.create_task(self._keepalive_reader(request_iterator))
-        # while True:
-        #     yield discovery_service_pb2.Servers(
-        #         Error=error_pb2.CommonError(),
-        #         Servers=self.server_list.servers
-        #     )
-        #     await asyncio.sleep(self.server_list.ttl.total_seconds())
-        # # await context.abort(grpc.StatusCode.CANCELLED)
-        # await input_
+        input_ = asyncio.create_task(self._keepalive_reader(request_iterator))
+        while True:
+            yield discovery_service_pb2.Servers(
+                Error=error_pb2.CommonError(),
+                Servers=self.server_list.servers
+            )
+            await asyncio.sleep(self.server_list.ttl.total_seconds())
+        # await context.abort(grpc.StatusCode.CANCELLED)
+        await input_
 
     async def Echo(self, request, context):
         return request
@@ -90,7 +90,7 @@ class DiscoveryServiceClient(NeptuneServiceSkeleton):
             await asyncio.sleep(interval)
         await stream.done_writing()
 
-    async def fetch(self, stream, interval):
+    async def fetch(self, stream):
         while True:
             response = await stream.read()
             if response == agrpc.EOF:
@@ -104,7 +104,7 @@ class DiscoveryServiceClient(NeptuneServiceSkeleton):
         self.stub = discovery_service_pb2_grpc.DiscoveryStub(self.channel)
 
         request = discovery_service_pb2.Server(Type="type_any", Id=13)
-        result = await self.stub.Echo("hello")
+        result = await self.stub.Echo(discovery_service_pb2.EchoMsg(Msg="13"))
         print(result)
 
         result = await self.stub.Register(request)
@@ -112,8 +112,9 @@ class DiscoveryServiceClient(NeptuneServiceSkeleton):
 
         stream = self.stub.Keepalive()
         await asyncio.gather(
-            self.keepalive(stream, 1),
-            self.fetch(stream)
+            self.keepalive(stream, result.Keepalive * 0.8),
+            self.fetch(stream),
+            return_exceptions=True
         )
 
     async def finish(self):
@@ -124,9 +125,15 @@ class DiscoveryServiceClient(NeptuneServiceSkeleton):
 import asyncio
 from neptune_py.skeleton.grpc_service import GRPCServerService
 from neptune_py.skeleton.skeleton import NeptuneServerSkeleton
-
+import sys
 
 if __name__ == '__main__':
+    if sys.argv[1] == 'c':
+        np_server = NeptuneServerSkeleton("abc")
+        np_server.add_service(DiscoveryServiceClient("dservice", "localhost:1313"))
+        asyncio.run(np_server.run())
+        exit(0)
+
     grpc_service = GRPCServerService("0.0.0.0:1313")
     discovery_service = DiscoveryService()
     np_server = NeptuneServerSkeleton("abc")

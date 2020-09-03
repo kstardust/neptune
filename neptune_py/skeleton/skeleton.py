@@ -97,7 +97,13 @@ class NeptuneServerSkeleton:
 
     async def run(self):
         self.init_services()
-        ret = await asyncio.gather(
+        task = asyncio.gather(
             *(service.run() for service in self.services),
         )
+        ret = None
+        try:
+            ret = await task
+        finally:
+            task.cancel()
+
         self.get_logger().debug(f"gathered all task {ret}")

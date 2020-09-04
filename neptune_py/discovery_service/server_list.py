@@ -21,6 +21,9 @@ class ServerList:
             if now - v.last_seen <= self.ttl
         }
 
+    def expire_peer(self, pid):
+        self._peers.pop(pid, None)
+
     def register(self, id_, data):
         self.expire()
         if id_ in self._peers:

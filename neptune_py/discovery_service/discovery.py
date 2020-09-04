@@ -18,7 +18,7 @@ class DiscoveryService(
     def __init__(self, ttl=timedelta(seconds=10)):
         super().__init__("DiscoveryService")
         self.server_list = ServerList(ttl)
-        self._peers = {}
+        self._peers = set()
 
     def init(self):
         self.server.get_logger().debug("init")
@@ -43,25 +43,39 @@ class DiscoveryService(
             Keepalive=int(self.server_list.ttl.total_seconds())
         )
 
-    async def _keepalive_reader(self, request_iterator):
-        async for request in request_iterator:
-            print(request)
-            self.server_list.keepalive(request.Id)
+    async def logic(self):
+        self.get_logger().debug("start discovery_service logic")
+        while True:
+            for context in self._peers:
+                await context.write(discovery_service_pb2.Servers(
+                    Error=error_pb2.CommonError(),
+                    Servers=self.server_list.servers
+                ))
+            await asyncio.sleep(self.server_list.ttl.total_seconds())
 
     async def Keepalive(self, request_iterator, context):
         print("keepalive start")
-        input_ = asyncio.create_task(self._keepalive_reader(request_iterator))
-        while True:
-            yield discovery_service_pb2.Servers(
-                Error=error_pb2.CommonError(),
-                Servers=self.server_list.servers
-            )
-            await asyncio.sleep(self.server_list.ttl.total_seconds())
-        # await context.abort(grpc.StatusCode.CANCELLED)
-        await input_
+        pid = None
+        try:
+            while True:
+                request = await context.read()
+                print(f"request {request}")
+                if request == agrpc.EOF:
+                    break
+                pid = request.Id if pid is None else pid
 
-    async def Echo(self, request, context):
-        return request
+                if pid != request.Id or (not self.server_list.keepalive(pid)):
+                    await context.write(discovery_service_pb2.Servers(
+                        Error=error_pb2.CommonError(
+                            Code=error_pb2.FAILED,
+                            Reason="keepalive failed"
+                        ),
+                    ))
+                    break
+                self._peers.add(context)
+        finally:
+            self._peers.discard(context)
+            self.server_list.expire_peer(pid)
 
 
 class DiscoveryServiceClient(NeptuneServiceSkeleton):
@@ -84,6 +98,7 @@ class DiscoveryServiceClient(NeptuneServiceSkeleton):
 
     async def keepalive(self, stream, interval):
         while True:
+            print("---------keepalive request")
             await stream.write(
                 discovery_service_pb2.KeepaliveRequest(Id=13)
             )
@@ -104,11 +119,11 @@ class DiscoveryServiceClient(NeptuneServiceSkeleton):
         self.stub = discovery_service_pb2_grpc.DiscoveryStub(self.channel)
 
         request = discovery_service_pb2.Server(Type="type_any", Id=13)
-        result = await self.stub.Echo(discovery_service_pb2.EchoMsg(Msg="13"))
-        print(result)
-
         result = await self.stub.Register(request)
-        print(result.Error.Code, result.Keepalive)
+        print(result.Error, result.Keepalive)
+
+        if result.Error.Code != error_pb2.OK:
+            return
 
         stream = self.stub.Keepalive()
         await asyncio.gather(

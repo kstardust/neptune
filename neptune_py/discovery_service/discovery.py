@@ -30,7 +30,7 @@ class DiscoveryService(
         )
 
     async def Register(self, request, context):
-        print("Register", request)
+        self.server.get_logger().debug(f"register {request}")
         if not self.server_list.register(request.Id, request):
             return discovery_service_pb2.RegisterResponse(
                 Error=error_pb2.CommonError(
@@ -54,12 +54,11 @@ class DiscoveryService(
             await asyncio.sleep(self.server_list.ttl.total_seconds())
 
     async def Keepalive(self, request_iterator, context):
-        print("keepalive start")
         pid = None
         try:
             while True:
                 request = await context.read()
-                print(f"request {request}")
+                self.server.get_logger().debug(f"keepalive request {request}")
                 if request == agrpc.EOF:
                     break
                 pid = request.Id if pid is None else pid
@@ -85,7 +84,7 @@ class DiscoveryServiceClient(NeptuneServiceSkeleton):
         self.channel = None
         self.stub = None
         self.service_info = service_info
-        self.listeners = weakref.WeakSet()
+        self.listeners = set()
 
     def add_listener(self, callback):
         '''
@@ -93,13 +92,12 @@ class DiscoveryServiceClient(NeptuneServiceSkeleton):
         '''
         self.listeners.add(callback)
 
-    def update(self):
+    def update(self, data):
         for listener in self.listeners:
-            listener(self)
+            listener(data)
 
     async def keepalive(self, stream, interval):
         while True:
-            print("---------keepalive request")
             await stream.write(
                 discovery_service_pb2.KeepaliveRequest(Id=self.service_info.Id)
             )
@@ -111,8 +109,7 @@ class DiscoveryServiceClient(NeptuneServiceSkeleton):
             response = await stream.read()
             if response == agrpc.EOF:
                 break
-            print(response)
-            self.update()
+            self.update(response.Servers)
 
     async def logic(self):
         self.channel = agrpc.insecure_channel(self.channel_address)
@@ -120,7 +117,6 @@ class DiscoveryServiceClient(NeptuneServiceSkeleton):
         self.stub = discovery_service_pb2_grpc.DiscoveryStub(self.channel)
 
         result = await self.stub.Register(self.service_info)
-        print(result.Error, result.Keepalive)
 
         if result.Error.Code != error_pb2.OK:
             return
@@ -140,6 +136,7 @@ class DiscoveryServiceClient(NeptuneServiceSkeleton):
 import asyncio
 from neptune_py.skeleton.grpc_service import GRPCServerService
 from neptune_py.skeleton.skeleton import NeptuneServerSkeleton
+from neptune_py.stub_service.stub import StubService
 import sys
 
 
@@ -150,17 +147,29 @@ async def test_services():
         Id=13,
         Address="localhost:1111"
     )
-    np_server.add_service(DiscoveryServiceClient("dservice", server_info, "localhost:1313"))
 
+    np_server.add_service(GRPCServerService("0.0.0.0:1111"))
+    np_server.add_service(
+        DiscoveryServiceClient("DiscoveryClientService", server_info, "localhost:1313")
+    )
+    np_server.add_service(StubService("DiscoveryClientService"))
+
+    np_server2 = NeptuneServerSkeleton("abc2")
     server_info2 = discovery_service_pb2.Server(
         Type="type_any",
         Id=14,
-        Address="localhost:1111"
+        Address="localhost:2222"
     )
-    np_server.add_service(DiscoveryServiceClient("dservice2", server_info2, "localhost:1313"))
+    np_server2.add_service(GRPCServerService("0.0.0.0:2222"))
+    np_server2.add_service(
+        DiscoveryServiceClient("DiscoveryClientService", server_info2, "localhost:1313")
+    )
+    np_server2.add_service(StubService("DiscoveryClientService"))
 
-    await np_server.run()
-
+    await asyncio.gather(
+        np_server.run(),
+        np_server2.run()
+    )
 
 if __name__ == '__main__':
     if sys.argv[1] == 'c':

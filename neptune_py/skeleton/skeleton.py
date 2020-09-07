@@ -96,6 +96,12 @@ class NeptuneServerSkeleton:
         for service in self.services:
             service.init_service(self)
 
+    def find_service(self, service_name):
+        for service in self.services:
+            if service.name == service_name:
+                return service
+        return None
+
     async def run(self):
         self.init_services()
         task = asyncio.gather(

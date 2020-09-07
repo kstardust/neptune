@@ -1,6 +1,7 @@
 import uuid
 import logging
 import asyncio
+import collections
 
 
 class NeptuneServiceSkeleton:
@@ -73,7 +74,7 @@ class NeptuneServiceSkeleton:
 
 class NeptuneServerSkeleton:
     def __init__(self, server_name):
-        self.services = set()
+        self.services = []
         self.server_name = server_name
         self._init_logger()
 
@@ -89,7 +90,7 @@ class NeptuneServerSkeleton:
         )
 
     def add_service(self, service: NeptuneServiceSkeleton):
-        self.services.add(service)
+        self.services.append(service)
 
     def init_services(self):
         for service in self.services:

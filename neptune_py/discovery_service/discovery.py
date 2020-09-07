@@ -79,11 +79,12 @@ class DiscoveryService(
 
 
 class DiscoveryServiceClient(NeptuneServiceSkeleton):
-    def __init__(self, name, channel_address):
+    def __init__(self, name, service_info: discovery_service_pb2.Server, channel_address):
         super().__init__(name)
         self.channel_address = channel_address
         self.channel = None
         self.stub = None
+        self.service_info = service_info
         self.listeners = weakref.WeakSet()
 
     def add_listener(self, callback):
@@ -100,7 +101,7 @@ class DiscoveryServiceClient(NeptuneServiceSkeleton):
         while True:
             print("---------keepalive request")
             await stream.write(
-                discovery_service_pb2.KeepaliveRequest(Id=13)
+                discovery_service_pb2.KeepaliveRequest(Id=self.service_info.Id)
             )
             await asyncio.sleep(interval)
         await stream.done_writing()
@@ -118,8 +119,7 @@ class DiscoveryServiceClient(NeptuneServiceSkeleton):
         await self.channel.channel_ready()
         self.stub = discovery_service_pb2_grpc.DiscoveryStub(self.channel)
 
-        request = discovery_service_pb2.Server(Type="type_any", Id=13)
-        result = await self.stub.Register(request)
+        result = await self.stub.Register(self.service_info)
         print(result.Error, result.Keepalive)
 
         if result.Error.Code != error_pb2.OK:
@@ -142,11 +142,29 @@ from neptune_py.skeleton.grpc_service import GRPCServerService
 from neptune_py.skeleton.skeleton import NeptuneServerSkeleton
 import sys
 
+
+async def test_services():
+    np_server = NeptuneServerSkeleton("abc")
+    server_info = discovery_service_pb2.Server(
+        Type="type_any",
+        Id=13,
+        Address="localhost:1111"
+    )
+    np_server.add_service(DiscoveryServiceClient("dservice", server_info, "localhost:1313"))
+
+    server_info2 = discovery_service_pb2.Server(
+        Type="type_any",
+        Id=14,
+        Address="localhost:1111"
+    )
+    np_server.add_service(DiscoveryServiceClient("dservice2", server_info2, "localhost:1313"))
+
+    await np_server.run()
+
+
 if __name__ == '__main__':
     if sys.argv[1] == 'c':
-        np_server = NeptuneServerSkeleton("abc")
-        np_server.add_service(DiscoveryServiceClient("dservice", "localhost:1313"))
-        asyncio.run(np_server.run())
+        asyncio.run(test_services())
         exit(0)
 
     grpc_service = GRPCServerService("0.0.0.0:1313")

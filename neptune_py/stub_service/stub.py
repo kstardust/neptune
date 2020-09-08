@@ -1,6 +1,18 @@
 import asyncio
+import neptune_py.proto as proto
 import grpc.experimental.aio as agrpc
 from neptune_py.skeleton.skeleton import NeptuneServiceSkeleton
+
+
+class Channel:
+    def __init__(self, name, channel):
+        self.name = name
+        self.channel = channel
+        self.stub = {}
+
+    def add_stub(self, name, stub):
+        s = stub(self.channel)
+        self.stub[name] = s
 
 
 class StubService(NeptuneServiceSkeleton):
@@ -26,6 +38,9 @@ class StubService(NeptuneServiceSkeleton):
         assert discovery_client_service is not None
         discovery_client_service.add_listener(self.discovery_callback)
 
+    async def logic(self):
+        self.stub_channels.get("type_any_13").stubs.get('Discovery').Echo()
+
     @classmethod
     def identifier_of_channel(cls, type_, id_):
         return '_'.join([type_, id_])
@@ -38,7 +53,21 @@ class StubService(NeptuneServiceSkeleton):
                     continue
                 channel = agrpc.insecure_channel(server.Address)
                 await channel.channel_ready()
-                self.stub_channels[identifier] = channel
+                stub_channel = Channel(identifier, channel)
+
+                for service in server.Services:
+                    s = getattr(proto, service + 'Stub', None)
+                    if s is not None:
+                        stub_channel.add_stub(service, s)
+                        self.server.get_logger().debug(
+                            f"register stub {service} to channel {identifier}"
+                        )
+                    else:
+                        self.server.get_logger().debug(
+                            f"unknown stub {service}"
+                        )
+
+                self.stub_channels[identifier] = stub_channel
                 self.server.get_logger().debug(
                     f"connected to new channel {identifier}, {server.Address}"
                 )

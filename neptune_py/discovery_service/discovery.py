@@ -1,9 +1,6 @@
 from datetime import (timedelta)
-import weakref
 import grpc.experimental.aio as agrpc
-from neptune_py.proto import discovery_service_pb2
-from neptune_py.proto import discovery_service_pb2_grpc
-from neptune_py.proto import error_pb2
+import neptune_py.proto as proto
 from neptune_py.skeleton.grpc_service import (
     NeptuneGRPCService, NeptuneServiceSkeleton
 )
@@ -13,7 +10,7 @@ from . server_list import ServerList
 
 class DiscoveryService(
         NeptuneGRPCService,
-        discovery_service_pb2_grpc.DiscoveryServicer):
+        proto.DiscoveryServicer):
 
     def __init__(self, ttl=timedelta(seconds=10)):
         super().__init__("DiscoveryService")
@@ -25,21 +22,22 @@ class DiscoveryService(
 
     @property
     def add_to_server(self):
-        return lambda x: discovery_service_pb2_grpc.add_DiscoveryServicer_to_server(
+        return lambda x: proto.add_DiscoveryServicer_to_server(
             self, x
         )
 
     async def Register(self, request, context):
         self.server.get_logger().debug(f"register {request}")
         if not self.server_list.register(request.Id, request):
-            return discovery_service_pb2.RegisterResponse(
-                Error=error_pb2.CommonError(
-                    Code=error_pb2.FAILED,
+            return proto.RegisterResponse(
+                Error=proto.CommonError(
+                    Code=proto.FAILED,
                     Reason=f"pid {request.Id} already exists"
                 ),
             )
-        return discovery_service_pb2.RegisterResponse(
-            Error=error_pb2.CommonError(),
+
+        return proto.RegisterResponse(
+            Error=proto.CommonError(),
             Keepalive=int(self.server_list.ttl.total_seconds())
         )
 
@@ -47,8 +45,8 @@ class DiscoveryService(
         self.get_logger().debug("start discovery_service logic")
         while True:
             for context in self._peers:
-                await context.write(discovery_service_pb2.Servers(
-                    Error=error_pb2.CommonError(),
+                await context.write(proto.Servers(
+                    Error=proto.CommonError(),
                     Servers=self.server_list.servers
                 ))
             await asyncio.sleep(self.server_list.ttl.total_seconds())
@@ -64,9 +62,9 @@ class DiscoveryService(
                 pid = request.Id if pid is None else pid
 
                 if pid != request.Id or (not self.server_list.keepalive(pid)):
-                    await context.write(discovery_service_pb2.Servers(
-                        Error=error_pb2.CommonError(
-                            Code=error_pb2.FAILED,
+                    await context.write(proto.Servers(
+                        Error=proto.CommonError(
+                            Code=proto.FAILED,
                             Reason="keepalive failed"
                         ),
                     ))
@@ -78,7 +76,7 @@ class DiscoveryService(
 
 
 class DiscoveryServiceClient(NeptuneServiceSkeleton):
-    def __init__(self, name, service_info: discovery_service_pb2.Server, channel_address):
+    def __init__(self, name, service_info: proto.Server, channel_address):
         super().__init__(name)
         self.channel_address = channel_address
         self.channel = None
@@ -99,7 +97,7 @@ class DiscoveryServiceClient(NeptuneServiceSkeleton):
     async def keepalive(self, stream, interval):
         while True:
             await stream.write(
-                discovery_service_pb2.KeepaliveRequest(Id=self.service_info.Id)
+                proto.KeepaliveRequest(Id=self.service_info.Id)
             )
             await asyncio.sleep(interval)
         await stream.done_writing()
@@ -114,11 +112,11 @@ class DiscoveryServiceClient(NeptuneServiceSkeleton):
     async def logic(self):
         self.channel = agrpc.insecure_channel(self.channel_address)
         await self.channel.channel_ready()
-        self.stub = discovery_service_pb2_grpc.DiscoveryStub(self.channel)
+        self.stub = proto.DiscoveryStub(self.channel)
 
         result = await self.stub.Register(self.service_info)
 
-        if result.Error.Code != error_pb2.OK:
+        if result.Error.Code != proto.OK:
             return
 
         stream = self.stub.Keepalive()
@@ -142,10 +140,11 @@ import sys
 
 async def test_services():
     np_server = NeptuneServerSkeleton("abc")
-    server_info = discovery_service_pb2.Server(
+    server_info = proto.Server(
         Type="type_any",
         Id=13,
-        Address="localhost:1111"
+        Address="localhost:1111",
+        Services=["Discovery"]
     )
 
     np_server.add_service(GRPCServerService("0.0.0.0:1111"))
@@ -155,10 +154,11 @@ async def test_services():
     np_server.add_service(StubService("DiscoveryClientService"))
 
     np_server2 = NeptuneServerSkeleton("abc2")
-    server_info2 = discovery_service_pb2.Server(
+    server_info2 = proto.Server(
         Type="type_any",
         Id=14,
-        Address="localhost:2222"
+        Address="localhost:2222",
+        Services=["Discovery"]
     )
     np_server2.add_service(GRPCServerService("0.0.0.0:2222"))
     np_server2.add_service(
@@ -183,4 +183,5 @@ if __name__ == '__main__':
 
     np_server.add_service(grpc_service)
     np_server.add_service(discovery_service)
+
     asyncio.run(np_server.run())

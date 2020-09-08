@@ -1,7 +1,6 @@
 import uuid
 import logging
 import asyncio
-import collections
 
 
 class NeptuneServiceSkeleton:

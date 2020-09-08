@@ -27,6 +27,7 @@ message Server {
   string Type = 1;
   int32 Id = 2;
   string Address = 3;
+  repeated string Services = 4;
 }
 
 message Servers {

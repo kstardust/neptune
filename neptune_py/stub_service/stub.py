@@ -8,11 +8,11 @@ class Channel:
     def __init__(self, name, channel):
         self.name = name
         self.channel = channel
-        self.stub = {}
+        self.stubs = {}
 
     def add_stub(self, name, stub):
         s = stub(self.channel)
-        self.stub[name] = s
+        self.stubs[name] = s
 
 
 class StubService(NeptuneServiceSkeleton):
@@ -37,9 +37,6 @@ class StubService(NeptuneServiceSkeleton):
         )
         assert discovery_client_service is not None
         discovery_client_service.add_listener(self.discovery_callback)
-
-    async def logic(self):
-        self.stub_channels.get("type_any_13").stubs.get('Discovery').Echo()
 
     @classmethod
     def identifier_of_channel(cls, type_, id_):
@@ -81,3 +78,5 @@ class StubService(NeptuneServiceSkeleton):
         while True:
             await self._semaphore.get()
             await self.update()
+            result = await self.stub_channels.get("type_any_13").stubs.get('Discovery').Echo(proto.EchoMsg(Msg="13"))
+            print("echo", result)

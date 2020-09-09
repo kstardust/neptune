@@ -74,6 +74,9 @@ class DiscoveryService(
             self._peers.discard(context)
             self.server_list.expire_peer(pid)
 
+    async def Echo(self, request, context):
+        return request
+
 
 class DiscoveryServiceClient(NeptuneServiceSkeleton):
     def __init__(self, name, service_info: proto.Server, channel_address):
@@ -147,10 +150,12 @@ async def test_services():
         Services=["Discovery"]
     )
 
-    np_server.add_service(GRPCServerService("0.0.0.0:1111"))
+    grpc_server = GRPCServerService("0.0.0.0:1111")
+    np_server.add_service(grpc_server)
     np_server.add_service(
         DiscoveryServiceClient("DiscoveryClientService", server_info, "localhost:1313")
     )
+    grpc_server.add_service(DiscoveryService())
     np_server.add_service(StubService("DiscoveryClientService"))
 
     np_server2 = NeptuneServerSkeleton("abc2")
@@ -160,10 +165,13 @@ async def test_services():
         Address="localhost:2222",
         Services=["Discovery"]
     )
-    np_server2.add_service(GRPCServerService("0.0.0.0:2222"))
+
+    grpc_server2 = GRPCServerService("0.0.0.0:2222")
+    np_server2.add_service(grpc_server2)
     np_server2.add_service(
         DiscoveryServiceClient("DiscoveryClientService", server_info2, "localhost:1313")
     )
+    grpc_server2.add_service(DiscoveryService())
     np_server2.add_service(StubService("DiscoveryClientService"))
 
     await asyncio.gather(

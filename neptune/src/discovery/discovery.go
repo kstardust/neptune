@@ -29,7 +29,7 @@ func (c *DiscoveryServiceClient) RemoveListener(listener Listener) {
 }
 
 func (c *DiscoveryServiceClient) update() {
-	for l, _ := range c.listeners {
+	for l := range c.listeners {
 		l.Update(c)
 	}
 }

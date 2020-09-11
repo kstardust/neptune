@@ -1,4 +1,4 @@
-package main
+package skeleton
 
 import (
 	"context"
@@ -17,20 +17,30 @@ type NPServiceMeta struct {
 }
 
 type NeptuneServerSkeleton struct {
-	services  []NPServiceMeta
+	services  []*NPServiceMeta
 	waitGroup sync.WaitGroup
 }
 
+type NeptuneServiceStatus int
+
+const (
+	NeptuneServiceNew NeptuneServiceStatus = iota
+	NeptuneServiceInited
+	NeptuneServiceRunnning
+	NeptuneServiceFinished
+)
+
 type NeptuneService interface {
 	Init(*NeptuneServerSkeleton) error
-	Logic(NPServiceMeta) error
+	Logic(*NPServiceMeta) error
+	Status() NeptuneServiceStatus
 	Finish()
-	Stop(NPServiceMeta)
+	Stop(*NPServiceMeta)
 }
 
 func (s *NeptuneServerSkeleton) AddService(name string, service NeptuneService) {
 	ctx, cancel := context.WithCancel(context.Background())
-	newService := NPServiceMeta{
+	newService := &NPServiceMeta{
 		Service: service,
 		Name:    name,
 		Ctx:     ctx,
@@ -43,6 +53,10 @@ func (s *NeptuneServerSkeleton) AddService(name string, service NeptuneService) 
 
 func (s *NeptuneServerSkeleton) InitServices() {
 	for _, service := range s.services {
+		if service.Service.Status() != NeptuneServiceNew {
+			log.Printf("cannot init service %s in status %v\n", service.Name, service.Service.Status())
+			continue
+		}
 		if err := service.Service.Init(s); err != nil {
 			log.Fatalf("error occurred during init %v\n", err)
 		}
@@ -58,7 +72,7 @@ func (s *NeptuneServerSkeleton) Run() {
 		go func() {
 			defer func() {
 				service.Service.Finish()
-				log.Printf("service %s done\n", service.Name)
+				log.Printf("service %s has exited.\n", service.Name)
 				s.waitGroup.Done()
 			}()
 			service.Service.Logic(service)
@@ -66,7 +80,16 @@ func (s *NeptuneServerSkeleton) Run() {
 	}
 
 	s.waitGroup.Wait()
-	log.Printf("all services has finished, server will quit now.")
+	log.Printf("all services have finished, server will quit now.")
+}
+
+func (s *NeptuneServerSkeleton) FindService(name string) NeptuneService {
+	for _, service := range s.services {
+		if service.Name == name {
+			return service.Service
+		}
+	}
+	return nil
 }
 
 func (s *NeptuneServerSkeleton) CancelAll() {
@@ -82,24 +105,21 @@ func (s MyService) Init(ns *NeptuneServerSkeleton) error {
 	return nil
 }
 
-func (s MyService) Logic(service NPServiceMeta) error {
+func (s MyService) Logic(service *NPServiceMeta) error {
 	fmt.Println("myservice logic")
 	time.Sleep(time.Second * 3)
 	return nil
+}
+
+func (s MyService) Status() NeptuneServiceStatus {
+	return NeptuneServiceNew
 }
 
 func (s MyService) Finish() {
 	fmt.Println("myservice finished")
 }
 
-func (s MyService) Stop(service NPServiceMeta) {
+func (s MyService) Stop(service *NPServiceMeta) {
 	fmt.Println("stoping myservice")
 	service.Cancel()
-}
-
-func main() {
-	server := &NeptuneServerSkeleton{}
-	var service MyService
-	server.AddService("foobar", service)
-	server.Run()
 }

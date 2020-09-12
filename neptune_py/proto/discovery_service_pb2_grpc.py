@@ -15,17 +15,17 @@ class DiscoveryStub(object):
             channel: A grpc.Channel.
         """
         self.Keepalive = channel.stream_stream(
-                '/discovery.Discovery/Keepalive',
+                '/neptune.Discovery/Keepalive',
                 request_serializer=discovery__service__pb2.KeepaliveRequest.SerializeToString,
                 response_deserializer=discovery__service__pb2.Servers.FromString,
                 )
         self.Register = channel.unary_unary(
-                '/discovery.Discovery/Register',
+                '/neptune.Discovery/Register',
                 request_serializer=discovery__service__pb2.Server.SerializeToString,
                 response_deserializer=discovery__service__pb2.RegisterResponse.FromString,
                 )
         self.Echo = channel.unary_unary(
-                '/discovery.Discovery/Echo',
+                '/neptune.Discovery/Echo',
                 request_serializer=discovery__service__pb2.EchoMsg.SerializeToString,
                 response_deserializer=discovery__service__pb2.EchoMsg.FromString,
                 )
@@ -72,7 +72,7 @@ def add_DiscoveryServicer_to_server(servicer, server):
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'discovery.Discovery', rpc_method_handlers)
+            'neptune.Discovery', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
 
 
@@ -91,7 +91,7 @@ class Discovery(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.stream_stream(request_iterator, target, '/discovery.Discovery/Keepalive',
+        return grpc.experimental.stream_stream(request_iterator, target, '/neptune.Discovery/Keepalive',
             discovery__service__pb2.KeepaliveRequest.SerializeToString,
             discovery__service__pb2.Servers.FromString,
             options, channel_credentials,
@@ -108,7 +108,7 @@ class Discovery(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/discovery.Discovery/Register',
+        return grpc.experimental.unary_unary(request, target, '/neptune.Discovery/Register',
             discovery__service__pb2.Server.SerializeToString,
             discovery__service__pb2.RegisterResponse.FromString,
             options, channel_credentials,
@@ -125,7 +125,7 @@ class Discovery(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/discovery.Discovery/Echo',
+        return grpc.experimental.unary_unary(request, target, '/neptune.Discovery/Echo',
             discovery__service__pb2.EchoMsg.SerializeToString,
             discovery__service__pb2.EchoMsg.FromString,
             options, channel_credentials,

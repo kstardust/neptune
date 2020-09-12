@@ -16,11 +16,11 @@ import error_pb2 as error__pb2
 
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='discovery_service.proto',
-  package='discovery',
+  package='neptune',
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x17\x64iscovery_service.proto\x12\tdiscovery\x1a\x0b\x65rror.proto\"\x16\n\x07\x45\x63hoMsg\x12\x0b\n\x03Msg\x18\x01 \x01(\t\"H\n\x10RegisterResponse\x12!\n\x05\x45rror\x18\x01 \x01(\x0b\x32\x12.Error.CommonError\x12\x11\n\tKeepalive\x18\x02 \x01(\x05\"\x1e\n\x10KeepaliveRequest\x12\n\n\x02Id\x18\x01 \x01(\x05\"E\n\x06Server\x12\x0c\n\x04Type\x18\x01 \x01(\t\x12\n\n\x02Id\x18\x02 \x01(\x05\x12\x0f\n\x07\x41\x64\x64ress\x18\x03 \x01(\t\x12\x10\n\x08Services\x18\x04 \x03(\t\"P\n\x07Servers\x12!\n\x05\x45rror\x18\x01 \x01(\x0b\x32\x12.Error.CommonError\x12\"\n\x07Servers\x18\x02 \x03(\x0b\x32\x11.discovery.Server2\xbf\x01\n\tDiscovery\x12\x42\n\tKeepalive\x12\x1b.discovery.KeepaliveRequest\x1a\x12.discovery.Servers\"\x00(\x01\x30\x01\x12<\n\x08Register\x12\x11.discovery.Server\x1a\x1b.discovery.RegisterResponse\"\x00\x12\x30\n\x04\x45\x63ho\x12\x12.discovery.EchoMsg\x1a\x12.discovery.EchoMsg\"\x00\x62\x06proto3'
+  serialized_pb=b'\n\x17\x64iscovery_service.proto\x12\x07neptune\x1a\x0b\x65rror.proto\"\x16\n\x07\x45\x63hoMsg\x12\x0b\n\x03Msg\x18\x01 \x01(\t\"J\n\x10RegisterResponse\x12#\n\x05\x45rror\x18\x01 \x01(\x0b\x32\x14.neptune.CommonError\x12\x11\n\tKeepalive\x18\x02 \x01(\x05\"\x1e\n\x10KeepaliveRequest\x12\n\n\x02Id\x18\x01 \x01(\x05\"E\n\x06Server\x12\x0c\n\x04Type\x18\x01 \x01(\t\x12\n\n\x02Id\x18\x02 \x01(\x05\x12\x0f\n\x07\x41\x64\x64ress\x18\x03 \x01(\t\x12\x10\n\x08Services\x18\x04 \x03(\t\"P\n\x07Servers\x12#\n\x05\x45rror\x18\x01 \x01(\x0b\x32\x14.neptune.CommonError\x12 \n\x07Servers\x18\x02 \x03(\x0b\x32\x0f.neptune.Server2\xb3\x01\n\tDiscovery\x12>\n\tKeepalive\x12\x19.neptune.KeepaliveRequest\x1a\x10.neptune.Servers\"\x00(\x01\x30\x01\x12\x38\n\x08Register\x12\x0f.neptune.Server\x1a\x19.neptune.RegisterResponse\"\x00\x12,\n\x04\x45\x63ho\x12\x10.neptune.EchoMsg\x1a\x10.neptune.EchoMsg\"\x00\x62\x06proto3'
   ,
   dependencies=[error__pb2.DESCRIPTOR,])
 
@@ -29,14 +29,14 @@ DESCRIPTOR = _descriptor.FileDescriptor(
 
 _ECHOMSG = _descriptor.Descriptor(
   name='EchoMsg',
-  full_name='discovery.EchoMsg',
+  full_name='neptune.EchoMsg',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='Msg', full_name='discovery.EchoMsg.Msg', index=0,
+      name='Msg', full_name='neptune.EchoMsg.Msg', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -54,28 +54,28 @@ _ECHOMSG = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=51,
-  serialized_end=73,
+  serialized_start=49,
+  serialized_end=71,
 )
 
 
 _REGISTERRESPONSE = _descriptor.Descriptor(
   name='RegisterResponse',
-  full_name='discovery.RegisterResponse',
+  full_name='neptune.RegisterResponse',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='Error', full_name='discovery.RegisterResponse.Error', index=0,
+      name='Error', full_name='neptune.RegisterResponse.Error', index=0,
       number=1, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='Keepalive', full_name='discovery.RegisterResponse.Keepalive', index=1,
+      name='Keepalive', full_name='neptune.RegisterResponse.Keepalive', index=1,
       number=2, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
@@ -93,21 +93,21 @@ _REGISTERRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=75,
+  serialized_start=73,
   serialized_end=147,
 )
 
 
 _KEEPALIVEREQUEST = _descriptor.Descriptor(
   name='KeepaliveRequest',
-  full_name='discovery.KeepaliveRequest',
+  full_name='neptune.KeepaliveRequest',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='Id', full_name='discovery.KeepaliveRequest.Id', index=0,
+      name='Id', full_name='neptune.KeepaliveRequest.Id', index=0,
       number=1, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
@@ -132,35 +132,35 @@ _KEEPALIVEREQUEST = _descriptor.Descriptor(
 
 _SERVER = _descriptor.Descriptor(
   name='Server',
-  full_name='discovery.Server',
+  full_name='neptune.Server',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='Type', full_name='discovery.Server.Type', index=0,
+      name='Type', full_name='neptune.Server.Type', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='Id', full_name='discovery.Server.Id', index=1,
+      name='Id', full_name='neptune.Server.Id', index=1,
       number=2, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='Address', full_name='discovery.Server.Address', index=2,
+      name='Address', full_name='neptune.Server.Address', index=2,
       number=3, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='Services', full_name='discovery.Server.Services', index=3,
+      name='Services', full_name='neptune.Server.Services', index=3,
       number=4, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
@@ -185,21 +185,21 @@ _SERVER = _descriptor.Descriptor(
 
 _SERVERS = _descriptor.Descriptor(
   name='Servers',
-  full_name='discovery.Servers',
+  full_name='neptune.Servers',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='Error', full_name='discovery.Servers.Error', index=0,
+      name='Error', full_name='neptune.Servers.Error', index=0,
       number=1, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='Servers', full_name='discovery.Servers.Servers', index=1,
+      name='Servers', full_name='neptune.Servers.Servers', index=1,
       number=2, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
@@ -234,35 +234,35 @@ _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 EchoMsg = _reflection.GeneratedProtocolMessageType('EchoMsg', (_message.Message,), {
   'DESCRIPTOR' : _ECHOMSG,
   '__module__' : 'discovery_service_pb2'
-  # @@protoc_insertion_point(class_scope:discovery.EchoMsg)
+  # @@protoc_insertion_point(class_scope:neptune.EchoMsg)
   })
 _sym_db.RegisterMessage(EchoMsg)
 
 RegisterResponse = _reflection.GeneratedProtocolMessageType('RegisterResponse', (_message.Message,), {
   'DESCRIPTOR' : _REGISTERRESPONSE,
   '__module__' : 'discovery_service_pb2'
-  # @@protoc_insertion_point(class_scope:discovery.RegisterResponse)
+  # @@protoc_insertion_point(class_scope:neptune.RegisterResponse)
   })
 _sym_db.RegisterMessage(RegisterResponse)
 
 KeepaliveRequest = _reflection.GeneratedProtocolMessageType('KeepaliveRequest', (_message.Message,), {
   'DESCRIPTOR' : _KEEPALIVEREQUEST,
   '__module__' : 'discovery_service_pb2'
-  # @@protoc_insertion_point(class_scope:discovery.KeepaliveRequest)
+  # @@protoc_insertion_point(class_scope:neptune.KeepaliveRequest)
   })
 _sym_db.RegisterMessage(KeepaliveRequest)
 
 Server = _reflection.GeneratedProtocolMessageType('Server', (_message.Message,), {
   'DESCRIPTOR' : _SERVER,
   '__module__' : 'discovery_service_pb2'
-  # @@protoc_insertion_point(class_scope:discovery.Server)
+  # @@protoc_insertion_point(class_scope:neptune.Server)
   })
 _sym_db.RegisterMessage(Server)
 
 Servers = _reflection.GeneratedProtocolMessageType('Servers', (_message.Message,), {
   'DESCRIPTOR' : _SERVERS,
   '__module__' : 'discovery_service_pb2'
-  # @@protoc_insertion_point(class_scope:discovery.Servers)
+  # @@protoc_insertion_point(class_scope:neptune.Servers)
   })
 _sym_db.RegisterMessage(Servers)
 
@@ -270,17 +270,17 @@ _sym_db.RegisterMessage(Servers)
 
 _DISCOVERY = _descriptor.ServiceDescriptor(
   name='Discovery',
-  full_name='discovery.Discovery',
+  full_name='neptune.Discovery',
   file=DESCRIPTOR,
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
   serialized_start=335,
-  serialized_end=526,
+  serialized_end=514,
   methods=[
   _descriptor.MethodDescriptor(
     name='Keepalive',
-    full_name='discovery.Discovery.Keepalive',
+    full_name='neptune.Discovery.Keepalive',
     index=0,
     containing_service=None,
     input_type=_KEEPALIVEREQUEST,
@@ -290,7 +290,7 @@ _DISCOVERY = _descriptor.ServiceDescriptor(
   ),
   _descriptor.MethodDescriptor(
     name='Register',
-    full_name='discovery.Discovery.Register',
+    full_name='neptune.Discovery.Register',
     index=1,
     containing_service=None,
     input_type=_SERVER,
@@ -300,7 +300,7 @@ _DISCOVERY = _descriptor.ServiceDescriptor(
   ),
   _descriptor.MethodDescriptor(
     name='Echo',
-    full_name='discovery.Discovery.Echo',
+    full_name='neptune.Discovery.Echo',
     index=2,
     containing_service=None,
     input_type=_ECHOMSG,

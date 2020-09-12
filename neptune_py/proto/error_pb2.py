@@ -16,16 +16,16 @@ _sym_db = _symbol_database.Default()
 
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='error.proto',
-  package='Error',
+  package='neptune',
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x0b\x65rror.proto\x12\x05\x45rror\"=\n\x0b\x43ommonError\x12\x1e\n\x04\x43ode\x18\x01 \x01(\x0e\x32\x10.Error.ErrorCode\x12\x0e\n\x06Reason\x18\x02 \x01(\t*\x1f\n\tErrorCode\x12\x06\n\x02OK\x10\x00\x12\n\n\x06\x46\x41ILED\x10\x01\x62\x06proto3'
+  serialized_pb=b'\n\x0b\x65rror.proto\x12\x07neptune\"?\n\x0b\x43ommonError\x12 \n\x04\x43ode\x18\x01 \x01(\x0e\x32\x12.neptune.ErrorCode\x12\x0e\n\x06Reason\x18\x02 \x01(\t*\x1f\n\tErrorCode\x12\x06\n\x02OK\x10\x00\x12\n\n\x06\x46\x41ILED\x10\x01\x62\x06proto3'
 )
 
 _ERRORCODE = _descriptor.EnumDescriptor(
   name='ErrorCode',
-  full_name='Error.ErrorCode',
+  full_name='neptune.ErrorCode',
   filename=None,
   file=DESCRIPTOR,
   create_key=_descriptor._internal_create_key,
@@ -43,8 +43,8 @@ _ERRORCODE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=85,
-  serialized_end=116,
+  serialized_start=89,
+  serialized_end=120,
 )
 _sym_db.RegisterEnumDescriptor(_ERRORCODE)
 
@@ -56,21 +56,21 @@ FAILED = 1
 
 _COMMONERROR = _descriptor.Descriptor(
   name='CommonError',
-  full_name='Error.CommonError',
+  full_name='neptune.CommonError',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='Code', full_name='Error.CommonError.Code', index=0,
+      name='Code', full_name='neptune.CommonError.Code', index=0,
       number=1, type=14, cpp_type=8, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='Reason', full_name='Error.CommonError.Reason', index=1,
+      name='Reason', full_name='neptune.CommonError.Reason', index=1,
       number=2, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -88,8 +88,8 @@ _COMMONERROR = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=22,
-  serialized_end=83,
+  serialized_start=24,
+  serialized_end=87,
 )
 
 _COMMONERROR.fields_by_name['Code'].enum_type = _ERRORCODE
@@ -100,7 +100,7 @@ _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 CommonError = _reflection.GeneratedProtocolMessageType('CommonError', (_message.Message,), {
   'DESCRIPTOR' : _COMMONERROR,
   '__module__' : 'error_pb2'
-  # @@protoc_insertion_point(class_scope:Error.CommonError)
+  # @@protoc_insertion_point(class_scope:neptune.CommonError)
   })
 _sym_db.RegisterMessage(CommonError)
 

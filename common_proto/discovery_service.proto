@@ -2,7 +2,7 @@ syntax = "proto3";
 
 import "error.proto";
 
-package discovery;
+package neptune;
 
 service Discovery {
         rpc Keepalive (stream KeepaliveRequest) returns (stream Servers) {}
@@ -15,7 +15,7 @@ message EchoMsg {
 }
 
 message RegisterResponse {
-  Error.CommonError Error = 1;
+  neptune.CommonError Error = 1;
   int32 Keepalive = 2;
 }
 
@@ -31,6 +31,6 @@ message Server {
 }
 
 message Servers {
-  Error.CommonError Error = 1;
+  neptune.CommonError Error = 1;
   repeated Server Servers = 2;
 }

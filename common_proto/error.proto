@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package Error;
+package neptune;
 
 enum ErrorCode {
 	OK = 0;

@@ -5,6 +5,8 @@ import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent))
 
+from . neptune_msg_pb2 import *
+from . neptune_msg_pb2_grpc import *
 from . discovery_service_pb2_grpc import *
 from . discovery_service_pb2 import *
 from . error_pb2_grpc import *

@@ -93,6 +93,9 @@ class DiscoveryServiceClient(NeptuneServiceSkeleton):
         '''
         self.listeners.add(callback)
 
+    def remove_listener(self, callback):
+        self.listeners.discard(callback)
+
     def update(self, data):
         for listener in self.listeners:
             listener(data)

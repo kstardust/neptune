@@ -24,7 +24,7 @@ class StubService(NeptuneServiceSkeleton):
         self._semaphore = asyncio.Queue()
         self._data = []
 
-    def discovery_callback(self, data: [int]):
+    def discovery_callback(self, data):
         if data:
             self._data = data
             # notify logic coroutine to update stub channels
@@ -36,7 +36,18 @@ class StubService(NeptuneServiceSkeleton):
             self.discovery_client_service_name
         )
         assert discovery_client_service is not None
-        discovery_client_service.add_listener(self.discovery_callback)
+        # python will create a new obj for every bound method,
+        # we store it here in order to call `remove_listener` later
+        self._listener = self.discovery_callback
+        discovery_client_service.add_listener(self._listener)
+
+    async def finish(self):
+        discovery_client_service = self.server.find_service(
+            self.discovery_client_service_name
+        )
+
+        if discovery_client_service is not None:
+            discovery_client_service.remove_listener(self._listener)
 
     @classmethod
     def identifier_of_channel(cls, type_, id_):

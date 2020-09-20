@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package neptune;
+
+service NeptuneMessageStream {
+        rpc MessageStream (stream NeptuneMessage) returns (stream NeptuneMessage) {}
+}
+
+enum NeptuneMessageType {
+	NeptuneMessageTypeCall = 0;
+}
+
+message NeptuneMessage {
+  NeptuneMessageType MsgType = 1;
+  string Payload = 3;
+}

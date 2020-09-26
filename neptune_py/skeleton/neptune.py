@@ -22,7 +22,7 @@ class TestClientEntity(NeptuneEntityBase):
         print(f'RpcResponseTestEcho, {arg}')
 
     def on_connected(self):
-        self.RpcStub.RpcReqTestEcho('hands cross the sea')
+        self.RpcStub.RpcReqTestEcho('hands across the sea')
 
 
 class Neptune:

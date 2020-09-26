@@ -9,16 +9,16 @@ This will be improved in future version.
 """
 
 
-class Neptune13Error:
-    class Neptune13EmptyCallChain(Exception):
+class NeptuneRpcError:
+    class NeptuneRpcEmptyCallChain(Exception):
         pass
 
-    class Neptune13InvalidMessager(Exception):
+    class NeptuneRpcInvalidMessager(Exception):
         pass
 
 
-class NestedNeptune13Stub:
-    NestedNeptune13Prefix = 'Nested'
+class NeptuneNestedRpcStub:
+    NestedNeptuneRpcPrefix = 'Nested'
 
     def __init__(self, messager, parent=None):
         '''
@@ -31,26 +31,27 @@ class NestedNeptune13Stub:
             # inherit from parent
             self.messager = parent.messager
             # TODO: Do we really need to copy call_chain?
-            self._call_chain = parent._call_chain.copy()
+            # child node rpc won't touch the element of parent node in call_chain,
+            # it's not necessary to copy
+            self._call_chain = parent._call_chain
         else:
             self.messager = messager
         if self.messager is None:
-            # TODO Customized Exception
-            raise Neptune13Error.Neptune13InvalidMessager('messager is None')
+            raise NeptuneRpcError.NeptuneRpcInvalidMessager('messager is None')
 
     def __call__(self, *args):
         if not self._call_chain:
-            raise Neptune13Error.Neptune13EmptyCallChain('empty call chain')
+            raise NeptuneRpcError.NeptuneRpcEmptyCallChain('empty call chain')
 
         current_call = self._call_chain[-1]
         current_call[1] = args
         func_name, *_ = current_call
 
-        if func_name.startswith(self.NestedNeptune13Prefix):
+        if func_name.startswith(self.NestedNeptuneRpcPrefix):
             return self
         else:
             # actually perform remote call
-            print(f'neptune 13 call {self._call_chain}')
+            print(f'neptune Rpc call {self._call_chain}')
             # test code
             return self._call_chain
 
@@ -60,14 +61,14 @@ class NestedNeptune13Stub:
 
         # call chain node: format [func_name, args]
         self._call_chain.append([func_name, None])
-        setattr(self, func_name, NestedNeptune13Stub(None, self))
+        setattr(self, func_name, NeptuneNestedRpcStub(None, self))
 
         # pop last call stack(it belongs to child node)
         self._call_chain = self._call_chain[:-1]
         return getattr(self, func_name)
 
 
-class NestedNeptune13:
+class NeptuneNestedRpc:
     def __init__(self, entity):
         self._entity = entity
 
@@ -117,11 +118,12 @@ class TestEntity:
         return obj
 
 
-slot = NestedNeptune13(TestEntity())
+if __name__ == '__main__':
+    slot = NeptuneNestedRpc(TestEntity())
 
-stub = NestedNeptune13Stub(13)
-call_chain = stub.NestedTestCall1('13', '13').NestedTestCall2('13', {'13': 13}).NestedTestCall3('13').FinalCall(13)
+    stub = NeptuneNestedRpcStub(13)
+    call_chain = stub.NestedTestCall1('13', '13').NestedTestCall2('13', {'13': 13}).NestedTestCall3('13').FinalCall(13)
 
-slot.execute(call_chain)
-stub.NestedTestCall1('1', '13').NestedTestCall2('13', {'1': 13}).NestedTestCall4('13').FinalCall(13)
-slot.execute(call_chain)
+    slot.execute(call_chain)
+    stub.NestedTestCall1('1', '13').NestedTestCall2('13', {'1': 13}).NestedTestCall4('13').FinalCall(13)
+    slot.execute(call_chain)

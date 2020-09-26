@@ -1,4 +1,6 @@
 import collections
+from neptune_py.skeleton import utils
+
 NeptuneMessageTuple = collections.namedtuple('NeptuneMessageTuple', ['type', 'message'])
 
 
@@ -63,7 +65,7 @@ class NeptuneMessagerManager:
         messager.on_message(message)
 
     def on_disconnected(self, id_):
-        print(f'\033[031m disconnected============{id_} \033[0m')
+        utils.color_print(utils.AnsiColor.FAIL, f'disconnected============{id_}')
         self.remove_messager(id_)
 
     def remove_messager(self, id_):

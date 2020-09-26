@@ -22,6 +22,7 @@ class GRPCServerService(NeptuneServiceSkeleton):
             service.add_to_server(self.grpc_server)
 
     async def logic(self):
+        self.get_logger().debug(f'start grpc service, service name: {self.name}')
         await self.grpc_server.start()
         await self.grpc_server.wait_for_termination()
 

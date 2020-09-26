@@ -1,29 +1,28 @@
-"""
-Don't perform consercutive calls (i.e. perform two
-remote call without consume the call_chain), otherwise
-the later call will override the former call_chain if
-they are from a common parent node, cause all sub nodes
-share the same call_chain in parent node.
+-- Don't perform consercutive calls (i.e. perform two
+-- remote call without consume the call_chain), otherwise
+-- the later call will override the former call_chain if
+-- they are from a common parent node, cause all sub nodes
+-- share the same call_chain in parent node.
 
-This will be improved in future version.
-"""
+-- This will be improved in future version.
+
 
 local function starts_with(str, start)
    return str:sub(1, #start) == start
 end
 
 
-nested_neptune_13_stub = {}
-function nested_neptune_13_stub.__index(self, func_name)
+NeptuneNestedRpcStub = {}
+function NeptuneNestedRpcStub.__index(self, func_name)
    print('unknown method, create new call node, name: ', func_name)
    table.insert(self._call_chain, {func_name})
-   rawset(self, func_name, nested_neptune_13_stub:New(nil, self))
+   rawset(self, func_name, NeptuneNestedRpcStub:New(nil, self))
    table.remove(self._call_chain)
    return rawget(self, func_name)
 end
 
 
-function nested_neptune_13_stub.__call(self, ...)
+function NeptuneNestedRpcStub.__call(self, ...)
    if #self._call_chain == 0 then
       -- TODO: assert messager is not empty
       print('empty call chain')
@@ -51,7 +50,7 @@ function nested_neptune_13_stub.__call(self, ...)
 end
 
 
-function nested_neptune_13_stub:New(messager, parent)
+function NeptuneNestedRpcStub:New(messager, parent)
    local t = {}
    setmetatable(t, self)
    t._call_chain = {}
@@ -72,18 +71,17 @@ function nested_neptune_13_stub:New(messager, parent)
 end
 
 
-nested_neptune_13 = {}
-
-function nested_neptune_13:execute(call_chain)
+NeptuneNestedRpc = {}
+function NeptuneNestedRpc:execute(call_chain)
    local slot = self.entity
    for i, call in ipairs(call_chain) do
-      func_name, args = table.unpack(call)
+      local func_name, args = table.unpack(call)
       print(i, func_name, table.unpack(args))
       slot = slot[func_name](table.unpack(args))
    end
 end
 
-function nested_neptune_13:New(entity)
+function NeptuneNestedRpc:New(entity)
    local t = {}
    setmetatable(t, self)
    self.__index = self
@@ -118,8 +116,8 @@ fake_entity = {
    end
 }
 
-stub = nested_neptune_13_stub:New(13)
-slot = nested_neptune_13:New(fake_entity)
+stub = NeptuneNestedRpcStub:New(13)
+slot = NeptuneNestedRpc:New(fake_entity)
 -- dont call stub method with `:`,  the colon operator
 -- has an extra self parameter.
 message = stub.NestedCall1(13, 13).NestedCall2(13, 13).NestedCall3(13, 13).FinalCall(13, 13)

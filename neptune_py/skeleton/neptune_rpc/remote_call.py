@@ -28,16 +28,15 @@ class NeptuneNestedRpcStub:
         '''
         self._call_chain = []
         self.parent = parent
-        self.encoder = encoder
-        if sender is None and self.parent is not None:
+
+        if self.parent is not None:
             # inherit from parent
             self.sender = parent.sender
-            # TODO: Do we really need to copy call_chain?
-            # child node rpc won't touch the element of parent node in call_chain,
-            # it's not necessary to copy
+            self.encoder = parent.encoder
             self._call_chain = parent._call_chain
         else:
             self.sender = sender
+            self.encoder = encoder
         if self.sender is None:
             raise NeptuneRpcError.NeptuneRpcInvalidSender('sender is None')
 

@@ -2,6 +2,10 @@ local common = require("neptune.skeleton.common")
 
 local NeptuneSkeleton = {}
 
+local NeptuneMessageType = common.Constant({
+   NeptuneMessageTypeCall = 1
+})
+
 local NeptuneMessager = common.Class.new('NeptuneMessager')
 NeptuneMessager.__index = NeptuneMessager
 function NeptuneMessager:ctor(read_writer, entity_cls)

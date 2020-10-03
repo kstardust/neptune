@@ -1,9 +1,12 @@
-local common = require("neptune.skeleton.common")
+local exports = {}
 
-local NeptuneSkeleton = {}
+local common = require("neptune.skeleton.common")
 
 local NeptuneEntityBase = common.Class.new('NeptuneEntityBase')
 NeptuneEntityBase.__index = NeptuneEntityBase
+function NeptuneEntityBase:ctor()
+   return setmetatable({}, self)
+end
 
-
-local NeptuneRemoteEntity = NeptuneEntityBase:ctor()
+exports.NeptuneEntityBase = NeptuneEntityBase
+return exports

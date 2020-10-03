@@ -7,10 +7,10 @@
 -- This will be improved in future version.
 local exports = {}
 
--- for compatibility of lua
-local unpack = unpack or table.unpack
-
 local json = require("neptune.utils.json")
+local np_messager = require("neptune.skeleton.messager")
+local common = require("neptune.skeleton.common")
+
 
 local function starts_with(str, start)
    return str:sub(1, #start) == start
@@ -29,29 +29,21 @@ end
 
 function NeptuneNestedRpcStub.__call(self, ...)
    if #self._call_chain == 0 then
-      -- TODO: assert sender is not empty
-      print('empty call chain')
+      error('empty call chain')
       return
    end
 
    local current_call = self._call_chain[#self._call_chain]
    current_call[2] = {...}
-   local func_name = unpack(current_call)
+   local func_name = common.unpack(current_call)
 
    if starts_with(func_name, 'Nested') then
       return self
    else
-      for k, v in ipairs(self._call_chain) do
-         print('chained call----------', k)
-         print('-func name', v[1])
-         for k1, v1 in ipairs(v[2]) do
-            print('-arg', k1, v1)
-         end
-      end
       -- 本来想抽出来，self.PerformRpc，
       -- 结果因为 __index 已经被设置为了函数，
       -- 而 Lua OOP 需要把 __index 设为 class
-      -- 的 table(不然根本找不到类方法)，无解。
+      -- 的 table(不然找不到类方法)
       self.sender(self.encoder(self._call_chain))      
    end
 end
@@ -64,7 +56,7 @@ function NeptuneNestedRpcStub:ctor(sender, encoder, parent)
    if parent ~= nil then
       t.sender = parent.sender
       t.encoder = parent.encoder
-      t._call_chain = {unpack(parent._call_chain)}
+      t._call_chain = {common.unpack(parent._call_chain)}
    else
       t.sender = sender
       t.encoder = encoder
@@ -98,50 +90,64 @@ function NeptuneNestedRpc:Execute(call_chain_data)
    local call_chain = self.decoder(call_chain_data)
    local slot = self.entity
    for i, call in ipairs(call_chain) do
-      local func_name, args = unpack(call)
-      print(i, func_name, unpack(args))
-      slot = slot[func_name](unpack(args))
+      local func_name, args = common.unpack(call)
+      slot = slot[func_name](slot, common.unpack(args))
    end
 end
 
+local NeptuneRpcProxy = {}
+NeptuneRpcProxy.__index = NeptuneRpcProxy
+function NeptuneRpcProxy:ctor(entity, established_callback, lost_callback)
+   local o = setmetatable({
+         entity = entity,
+         established_callback = established_callback,
+         lost_callback = lost_callback
+   }, self)
+   o.rpc_executor = NeptuneNestedRpc:ctor(o.entity)
+   return o
+end
+
+function NeptuneRpcProxy:EstablishRpc(connector)
+   connector:Connect(
+      function (writer)
+         return np_messager.NeptuneMessager:ctor(writer, self)
+      end
+   )
+end
+
+function NeptuneRpcProxy:BindMessager(messager)
+   print('RpcProxy Bind Messager')
+   self.messager = messager
+   self.rpc_stub = NeptuneNestedRpcStub:ctor(
+      function (msg)
+         self.messager:WriteMessage(
+            np_messager.NeptuneMessageType.NeptuneMessageTypeCall,
+            msg
+         )
+      end
+   )
+   self.established_callback()
+end
+
+function NeptuneRpcProxy:OnMessagerLost()
+   self.lost_callback()
+end
+
+function NeptuneRpcProxy:Close()
+   self.messager:Close()
+end
+
+function NeptuneRpcProxy:OnMessage(mtype, msg)
+   print(mtype, msg)
+   if mtype == np_messager.NeptuneMessageType.NeptuneMessageTypeCall then
+      self.rpc_executor:Execute(msg)
+   else
+      print('unknown message type', mtype, msg)
+   end
+end
+
+exports.NeptuneRpcProxy = NeptuneRpcProxy
 exports.NeptuneNestedRpc = NeptuneNestedRpc
 exports.NeptuneNestedRpcStub = NeptuneNestedRpcStub
 
 return exports
-------------------------- Test Code
--- function NestedCall2(...)
---       print('NestedCall2', ...)
---       return { NestedCall3 = NestedCall3, NestedCall4 = NestedCall4 }
--- end
-
--- function NestedCall3(...)
---       print('NestedCall3', ...)
---       return { FinalCall = FinalCall }
--- end
-
--- function NestedCall4(...)
---       print('NestedCall4', ...)
---       return { FinalCall = FinalCall }
--- end
-
--- function FinalCall(...)
---       print('FinalCall', ...)
--- end
-
--- fake_entity = {
---    NestedCall1 = function (...)
---       print('NestedCall1', ...)
---       return { NestedCall2 = NestedCall2 }
---    end
--- }
-
--- stub = NeptuneNestedRpcStub:New(13)
--- slot = NeptuneNestedRpc:New(fake_entity)
--- -- dont call stub method with `:`,  the colon operator
--- -- has an extra self parameter.
--- message = stub.NestedCall1(13, 13).NestedCall2(13, 13).NestedCall3(13, 13).FinalCall(13, 13)
--- slot:execute(message)
-
--- message = stub.NestedCall1(1, 13).NestedCall2(1, 13).NestedCall4(13, 13).FinalCall(13, 1)
--- slot:execute(message)
-

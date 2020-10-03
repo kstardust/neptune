@@ -1,17 +1,18 @@
 local common = require("neptune.skeleton.common")
 
-local NeptuneSkeleton = {}
+local exports = {}
 
-local NeptuneMessageType = common.Constant({
+exports.NeptuneMessageType = common.Constant({
    NeptuneMessageTypeCall = 1
 })
 
+
 local NeptuneMessager = common.Class.new('NeptuneMessager')
 NeptuneMessager.__index = NeptuneMessager
-function NeptuneMessager:ctor(read_writer, entity_cls)
+function NeptuneMessager:ctor(writer, entity)
    local o = setmetatable({
-         read_writer = read_writer,
-         entity_cls = entity_cls,
+         writer = writer,
+         entity = entity,
       },
       self
    )
@@ -19,19 +20,14 @@ function NeptuneMessager:ctor(read_writer, entity_cls)
 end
 
 function NeptuneMessager:OnConnected()
-   if self.entity ~= nil then
-      error("this messager already has entity?")
-   end
-   self.entity = self.entity_cls()
    self.entity:BindMessager(self)
 end
 
 function NeptuneMessager:OnMessage(mtype, msg)
-   if self.entity ~= nil then
+   if self.entity == nil then
       error("this messager doesnt have entity")
    end
-   self.entity = self.entity_cls()
-   self.entity:BindMessager(self)
+   self.entity:OnMessage(mtype, msg)
 end
 
 function NeptuneMessager:OnError(err)
@@ -43,13 +39,14 @@ function NeptuneMessager:OnDisconnected()
 end
 
 function NeptuneMessager:Close()
-   print("not implemented")
+   self.writer:Close()
 end
 
-function NeptuneMessager:SendMessage(mtype, msg)
-   self.read_writer.WriteMessage(mtype, msg)
+function NeptuneMessager:WriteMessage(mtype, msg)
+   self.writer:WriteMessage(mtype, msg)
 end
 
+-- client-side doesnt need an manager
 
 -- local NeptuneMessagerClientManager = common.Class.new('NeptuneMessagerClientManager')
 -- NeptuneMessagerClientManager.__index = NeptuneMessagerClientManager
@@ -96,7 +93,7 @@ end
 
 
 -- export
-NeptuneSkeleton.NeptuneMessager = NeptuneMessager
+exports.NeptuneMessager = NeptuneMessager
 -- NeptuneSkeleton.NeptuneMessagerClientManager = NeptuneMessagerClientManager
 
-return NeptuneSkeleton
+return exports

@@ -1,4 +1,7 @@
-local common = {}
+local exports = {}
+
+-- for compatibility of lua
+local unpack = unpack or table.unpack
 
 local Class = {}
 Class.__index = Class
@@ -9,7 +12,7 @@ function Class.new(type_)
    return self
 end
 
-function Constant(o)
+function exports.Constant(o)
    return setmetatable({}, {
          __index = o,
          __newindex = function(t, k, v)
@@ -19,5 +22,7 @@ function Constant(o)
    })
 end
 
-common.Class = Class
-return common
+exports.Class = Class
+exports.unpack = unpack
+
+return exports

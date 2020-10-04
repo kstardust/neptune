@@ -18,7 +18,7 @@ class TestEntity(NeptuneEntityBase):
     def RpcReqCallServer(self, arg):
         print(f'RpcReqTestEcho, {arg}')
         # self.RpcStub.RpcResponseTestEcho(arg)
-        self.RpcStub.NestedCall1('13').FinalCall(13)
+        self.rpc_stub.NestedCall1('13').FinalCall(13)
 
 
 class TestClientEntity(NeptuneEntityBase):
@@ -26,7 +26,7 @@ class TestClientEntity(NeptuneEntityBase):
         print(f'RpcResponseTestEcho, {arg}')
 
     def on_connected(self):
-        self.RpcStub.RpcReqTestEcho('hands across the sea')
+        self.rpc_stub.RpcReqTestEcho('hands across the sea')
 
 
 class Neptune:

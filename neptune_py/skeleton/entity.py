@@ -12,7 +12,7 @@ class NeptuneEntityBase:
         utils.color_print(utils.AnsiColor.OKGREEN, 'bind messager')
 
         self.messager = messager
-        self.rpc_stub = remote_call.NeptuneNestedRpcStub(
+        self._rpc_stub = remote_call.NeptuneNestedRpcStub(
             lambda message: self.messager.write_message(
                 NeptuneMessageType.NeptuneMessageTypeCall,
                 message
@@ -24,11 +24,11 @@ class NeptuneEntityBase:
         pass
 
     @property
-    def RpcStub(self):
-        return self.rpc_stub
+    def rpc_stub(self):
+        return self._rpc_stub
 
     def on_messager_lost(self, messager):
-        self.rpc_stub = None
+        self._rpc_stub = None
         utils.color_print(utils.AnsiColor.WARNING, 'messager lost')
 
     def on_message(self, message: NeptuneMessageTuple):

@@ -17,7 +17,7 @@ class NeptuneWSServiceAmbiguousRoute(NeptuneWSServiceError):
 
 
 class NeptuneWSRouteMixin:
-    def Route(self):
+    def route(self):
         """
         return: a tuple: (route_path, handler)
         """
@@ -54,7 +54,7 @@ class NeptuneWSService(NeptuneServiceSkeleton):
             await self.runner.cleanup()
 
     def add_route(self, ws_route: NeptuneWSRouteMixin):
-        r, h = ws_route.Route()
+        r, h = ws_route.route()
         if r in self.routes:
             raise NeptuneWSServiceAmbiguousRoute()
         self.routes[r] = h
@@ -74,12 +74,12 @@ class NeptuneWSRpcWriter(NeptuneWriterBaseAbstract):
 class NeptuneWSRpc(NeptuneServiceSkeleton, NeptuneWSRouteMixin):
     def __init__(self, route, messager_manager, name='NeptuneWSRpc'):
         super().__init__(name)
-        self.route = route
+        self._route = route
         self.messager_manager = messager_manager
         self.messager_id = 0
 
-    def Route(self):
-        return (self.route, self.websocket_handler)
+    def route(self):
+        return (self._route, self.websocket_handler)
 
     async def websocket_handler(self, request):
         ws = web.WebSocketResponse()

@@ -69,12 +69,18 @@ function NeptuneWSRpc:OnMessage(data)
 end
 
 function NeptuneWSRpc:OnClose(...)
-   self.messager:OnDisconnected()
+   if self.messager ~= nil then
+      self.messager:OnDisconnected()
+   end
    print('close', ...)
 end
 
 function NeptuneWSRpc:OnError(err)
-   self.messager:OnError(err)
+   if self.messager ~= nil then
+      self.messager:OnError(err)
+   else
+      error(err)
+   end
 end
 
 

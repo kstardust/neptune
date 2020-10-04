@@ -66,7 +66,7 @@ class NeptuneServiceSkeleton:
             await self.finish_service()
             self.server.get_logger().debug(f'service {self.name} finished')
 
-    def stop(self):
+    async def stop(self):
         if self._logic_task is not None and not self._logic_task.done():
             self._logic_task.cancel()
 

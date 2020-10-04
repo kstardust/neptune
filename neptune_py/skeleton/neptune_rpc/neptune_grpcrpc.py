@@ -16,7 +16,8 @@ class NeptuneRPCServiceImp(proto.NeptuneMessageStream):
 
     async def MessageStream(self, request, context):
         self._stream_id += 1
-        await self.service.MessageStreamStart(self._stream_id, context)
+        stream_id = self._stream_id
+        await self.service.MessageStreamStart(stream_id, context)
         try:
             while True:
                 message = await context.read()
@@ -26,9 +27,9 @@ class NeptuneRPCServiceImp(proto.NeptuneMessageStream):
                     type=message.MsgType,
                     message=message.Payload
                 )
-                await self.service.MessageArrived(self._stream_id, np_message)
+                await self.service.MessageArrived(stream_id, np_message)
         finally:
-            await self.service.MessageStreamEnd(self._stream_id)
+            await self.service.MessageStreamEnd(stream_id)
 
 
 class NeptuneGRPCRPCWriter(NeptuneWriterBaseAbstract):

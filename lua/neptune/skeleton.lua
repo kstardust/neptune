@@ -8,7 +8,7 @@ local remote_call = require("neptune.skeleton.remote_call")
 local TestingEntity = setmetatable({}, {__index = entity.NeptuneEntityBase})
 TestingEntity.__index = TestingEntity
 function TestingEntity:Init()
-   local ws_rpc = cocos_ws_rpc.NeptuneWSRpc:ctor("ws://echo.websocket.org")
+   local ws_rpc = cocos_ws_rpc.NeptuneWSRpc:ctor("ws://127.0.0.1:1314")
 
    self.rpc = remote_call.NeptuneRpcProxy:ctor(
       self,

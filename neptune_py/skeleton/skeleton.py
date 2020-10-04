@@ -111,5 +111,4 @@ class NeptuneServerSkeleton:
             ret = await task
         finally:
             task.cancel()
-
-        self.get_logger().debug(f"gathered all task {ret}")
+            self.get_logger().debug(f"gathered all task {ret}")

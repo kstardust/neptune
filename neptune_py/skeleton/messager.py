@@ -1,4 +1,5 @@
 import collections
+import abc
 from neptune_py.skeleton import utils
 
 NeptuneMessageTuple = collections.namedtuple('NeptuneMessageTuple', ['type', 'message'])
@@ -9,9 +10,11 @@ class NeptuneMessageType:
 
 
 class NeptuneWriterBaseAbstract:
+    @abc.abstractmethod
     def write(self, message_type: NeptuneMessageType, message):
         raise NotImplementedError()
 
+    @abc.abstractmethod
     def close(self):
         raise NotImplementedError()
 

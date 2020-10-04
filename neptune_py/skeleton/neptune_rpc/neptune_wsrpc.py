@@ -1,4 +1,5 @@
 import asyncio
+import abc
 from aiohttp import web
 import aiohttp
 
@@ -17,6 +18,7 @@ class NeptuneWSServiceAmbiguousRoute(NeptuneWSServiceError):
 
 
 class NeptuneWSRouteMixin:
+    @abc.abstractmethod
     def route(self):
         """
         return: a tuple: (route_path, handler)
@@ -40,6 +42,10 @@ class NeptuneWSService(NeptuneServiceSkeleton):
             self.get_logger().debug(f'add route {route}')
         self.get_logger().debug(f'init NeptuneWSService {self.name}')
 
+    async def StillAlive(self):
+        while True:
+            await asyncio.sleep(130)
+
     async def logic(self):
         # https://docs.aiohttp.org/en/stable/web_advanced.html#application-runners
         self.runner = web.AppRunner(self.ws_app)
@@ -47,8 +53,10 @@ class NeptuneWSService(NeptuneServiceSkeleton):
         site = web.TCPSite(self.runner, self.host, self.port)
         self.get_logger().debug(f'start logic NeptuneWSService {self.name}')
         await site.start()
+        # keep service logic coroutine alive
+        await self.StillAlive()
 
-    async def stop(self):
+    async def finish(self):
         self.get_logger().debug(f'stopping NeptuneWSService {self.name}...')
         if self.runner:
             await self.runner.cleanup()

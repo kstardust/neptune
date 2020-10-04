@@ -7,8 +7,9 @@ local remote_call = require("neptune.skeleton.remote_call")
 
 local TestingEntity = setmetatable({}, {__index = entity.NeptuneEntityBase})
 TestingEntity.__index = TestingEntity
-function TestingEntity:Init()
+function TestingEntity:Init(label)
 
+   self.label = label
    -- 创建 websocket rpc 连接器，负责网络数据传输
    local ws_rpc = cocos_ws_rpc.NeptuneWSRpc:ctor("ws://127.0.0.1:1313/13")
 
@@ -20,7 +21,7 @@ function TestingEntity:Init()
       function(...) self.RpcError(self, ...) end        -- rpc 连接错误的回调
    )
 
-   -- 利用 websocket 来连接到 rpc proxy
+   -- 利用 websocket 来连接到远端
    self.rpc:EstablishRpc(ws_rpc)
 end
 
@@ -41,17 +42,16 @@ end
 
 function TestingEntity:Rpc2ClientRespEcho(arg)
    print('---------Rpc2ClientRespEcho', arg)
-   self.rpc.rpc_stub.Rpc2ServerReqGetPoem()
 end
 
 function TestingEntity:Rpc2ClientRespShowPoem(poem)
-   print(poem)
-   self.rpc.rpc_stub.Rpc2ServerReqGetPoem()
+   self.label:setString(poem)
 end
 
-function exports.Init()
+function exports.GetTestingEntity(label)
    local testingEntity = TestingEntity:ctor()
-   testingEntity:Init()
+   testingEntity:Init(label)
+   return testingEntity
 end
    
 return exports

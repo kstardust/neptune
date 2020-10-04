@@ -97,11 +97,12 @@ end
 
 local NeptuneRpcProxy = {}
 NeptuneRpcProxy.__index = NeptuneRpcProxy
-function NeptuneRpcProxy:ctor(entity, established_callback, lost_callback)
+function NeptuneRpcProxy:ctor(entity, established_callback, lost_callback, error_callback)
    local o = setmetatable({
          entity = entity,
          established_callback = established_callback,
-         lost_callback = lost_callback
+         lost_callback = lost_callback,
+         error_callback = error_callback
    }, self)
    o.rpc_executor = NeptuneNestedRpc:ctor(o.entity)
    return o
@@ -126,15 +127,25 @@ function NeptuneRpcProxy:BindMessager(messager)
          )
       end
    )
-   self.established_callback()
+   if self.established_callback ~= nil then
+      self.established_callback()      
+   end   
 end
 
 function NeptuneRpcProxy:OnMessagerLost()
-   self.lost_callback()
+   if self.lost_callback ~= nil then
+      self.lost_callback()
+   end
 end
 
 function NeptuneRpcProxy:Close()
    self.messager:Close()
+end
+
+function NeptuneRpcProxy:OnError(err)
+   if self.error_callback ~= nil then
+      self.error_callback(err)
+   end
 end
 
 function NeptuneRpcProxy:OnMessage(mtype, msg)

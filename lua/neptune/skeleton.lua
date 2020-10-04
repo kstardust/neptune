@@ -8,31 +8,48 @@ local remote_call = require("neptune.skeleton.remote_call")
 local TestingEntity = setmetatable({}, {__index = entity.NeptuneEntityBase})
 TestingEntity.__index = TestingEntity
 function TestingEntity:Init()
-   local ws_rpc = cocos_ws_rpc.NeptuneWSRpc:ctor("ws://127.0.0.1:1314")
 
+   -- 创建 websocket rpc 连接器，负责网络数据传输
+   local ws_rpc = cocos_ws_rpc.NeptuneWSRpc:ctor("ws://127.0.0.1:1313/13")
+
+   -- 创建 rpc proxy
    self.rpc = remote_call.NeptuneRpcProxy:ctor(
-      self,
-      function(...) self.RpcEstablished(self, ...) end,
-      function(...) self.RpcLost(self, ...) end
+      self,                                             -- rpc 绑定的实体，远端发回的 rpc 会在这个对象上执行
+      function(...) self.RpcEstablished(self, ...) end, -- rpc 连接建立成功的回调
+      function(...) self.RpcLost(self, ...) end,         -- rpc 连接断开的回调
+      function(...) self.RpcError(self, ...) end        -- rpc 连接错误的回调
    )
+
+   -- 利用 websocket 来连接到 rpc proxy
    self.rpc:EstablishRpc(ws_rpc)
 end
 
 function TestingEntity:RpcEstablished()
-   self.rpc.rpc_stub.NestedCall1('13').FinalCall(13)
+   local arg = {
+      ["13"] = 13
+   }
+   self.rpc.rpc_stub.Rpc2ServerReqEcho(arg)
 end
 
 function TestingEntity:RpcLost()
    print('---------lost rpc')
 end
 
-function TestingEntity:NestedCall1(arg)
-   print('---------Nestedcall1', arg)
-   return {FinalCall = function(self, arg) print(arg) end}
+function TestingEntity:RpcError(err)
+   print('---------rpc error', err)
+end
+
+function TestingEntity:Rpc2ClientRespEcho(arg)
+   print('---------Rpc2ClientRespEcho', arg)
+   self.rpc.rpc_stub.Rpc2ServerReqGetPoem()
+end
+
+function TestingEntity:Rpc2ClientRespShowPoem(poem)
+   print(poem)
+   self.rpc.rpc_stub.Rpc2ServerReqGetPoem()
 end
 
 function exports.Init()
-   print('stardustk13')
    local testingEntity = TestingEntity:ctor()
    testingEntity:Init()
 end

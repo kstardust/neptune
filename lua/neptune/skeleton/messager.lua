@@ -31,7 +31,7 @@ function NeptuneMessager:OnMessage(mtype, msg)
 end
 
 function NeptuneMessager:OnError(err)
-   print("not implemented")
+   self.entity:OnError(err)
 end
 
 function NeptuneMessager:OnDisconnected()

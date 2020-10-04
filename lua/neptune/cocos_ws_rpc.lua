@@ -76,11 +76,10 @@ function NeptuneWSRpc:OnClose(...)
 end
 
 function NeptuneWSRpc:OnError(err)
-   if self.messager ~= nil then
-      self.messager:OnError(err)
-   else
-      error(err)
+   if self.messager == nil then
+      self.messager = self.messager_ctor(NeptuneWSRpcWriter:ctor(nil))      
    end
+   self.messager:OnError(err)
 end
 
 

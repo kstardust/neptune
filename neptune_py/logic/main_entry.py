@@ -9,6 +9,16 @@ from neptune_py.skeleton.neptune_rpc.neptune_wsrpc import (
 from . test_entity import TestingClientEntity
 
 
+class Introspector(NeptuneServiceSkeleton):
+    def __init__(self):
+        super().__init__('Introspector')
+
+    async def logic(self):
+        while True:
+            self.get_logger().debug(f'current tasks(coroutines) {len(asyncio.all_tasks())}')
+            await asyncio.sleep(5)
+
+
 class Neptune:
     def __init__(self, name):
         self.name = name
@@ -24,6 +34,7 @@ class Neptune:
 
         np_server.add_service(wsrpc)
         np_server.add_service(ws_server)
+        np_server.add_service(Introspector())
         self.np_server = np_server
 
     async def run(self):

@@ -19,6 +19,29 @@ class Introspector(NeptuneServiceSkeleton):
             await asyncio.sleep(5)
 
 
+from aiohttp import web
+import aiohttp
+
+
+class WebSocketEcho:
+    def __init__(self):
+        self._route = "/echo"
+
+    def route(self):
+        return (self._route, self.websocket_handler)
+
+    async def websocket_handler(self, request):
+        ws = web.WebSocketResponse()
+        await ws.prepare(request)
+        async for msg in ws:
+            if msg.type == aiohttp.WSMsgType.TEXT or msg.type == aiohttp.WSMsgType.BINARY:
+                print(f"received: {msg.data}")
+                await ws.send_str(msg.data)
+            else:
+                self.get_logger().debug(f'unexpected type {msg.typ}')
+                break
+
+
 class Neptune:
     def __init__(self, name):
         self.name = name
@@ -31,6 +54,7 @@ class Neptune:
         ws_server = NeptuneWSService('0.0.0.0', '1313')
         wsrpc = NeptuneWSRpc('/13', self.client_manager)
         ws_server.add_route(wsrpc)
+        ws_server.add_route(WebSocketEcho())
 
         np_server.add_service(wsrpc)
         np_server.add_service(ws_server)

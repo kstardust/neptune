@@ -20,15 +20,15 @@ class NeptuneWriterBaseAbstract:
 
 
 class NeptuneMessager:
-    def __init__(self, id_, manager, read_writer, entity_cls):
+    def __init__(self, id_, manager, writer: NeptuneWriterBaseAbstract, entity_cls):
         self.manager = manager
         self.entity_cls = entity_cls
         self.id_ = id_
-        self.read_writer = read_writer
+        self.writer = writer
         self.entity = None
 
     def write_message(self, mtype, message):
-        self.read_writer.write(mtype, message)
+        self.writer.write(mtype, message)
 
     def on_message(self, message):
         self.entity.on_message(message)
@@ -44,7 +44,7 @@ class NeptuneMessager:
         self.entity.on_messager_lost(self)
 
     def close(self):
-        raise NotImplementedError()
+        self.writer.close()
 
 
 class NeptuneMessagerManager:
@@ -52,9 +52,9 @@ class NeptuneMessagerManager:
         self.entity_cls = entity_cls
         self.messagers = {}
 
-    def on_connected(self, id_, read_writer):
+    def on_connected(self, id_, writer: NeptuneWriterBaseAbstract):
         messager = NeptuneMessager(
-            id_, self, read_writer, self.entity_cls
+            id_, self, writer, self.entity_cls
         )
         messager.on_connected()
         self.messagers[id_] = messager

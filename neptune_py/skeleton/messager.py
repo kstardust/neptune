@@ -1,5 +1,6 @@
 import collections
 import abc
+import struct
 from neptune_py.skeleton import utils
 
 NeptuneMessageTuple = collections.namedtuple('NeptuneMessageTuple', ['type', 'message'])
@@ -11,7 +12,7 @@ class NeptuneMessageType:
 
 class NeptuneWriterBaseAbstract:
     @abc.abstractmethod
-    def write(self, message_type: NeptuneMessageType, message):
+    def write(self, message):
         raise NotImplementedError()
 
     @abc.abstractmethod
@@ -20,6 +21,9 @@ class NeptuneWriterBaseAbstract:
 
 
 class NeptuneMessager:
+    MessageTypeFormat = '!H'
+    MessageTypeSize = struct.calcsize(MessageTypeFormat)
+
     def __init__(self, id_, manager, writer: NeptuneWriterBaseAbstract, entity_cls):
         self.manager = manager
         self.entity_cls = entity_cls
@@ -28,10 +32,16 @@ class NeptuneMessager:
         self.entity = None
 
     def write_message(self, mtype, message):
-        self.writer.write(mtype, message)
+        self.writer.write(struct.pack(self.MessageTypeFormat, mtype) + message)
 
     def on_message(self, message):
-        self.entity.on_message(message)
+        if len(message) < self.MessageTypeSize:
+            # TODO: log
+            utils.color_print(utils.AnsiColor.FAIL, "invalid message, cannot unpack message type")
+            self.close()
+            return
+        mtype = struct.unpack(self.MessageTypeFormat, message[:self.MessageTypeSize])
+        self.entity.on_message(NeptuneMessageTuple(type=mtype, message=message[self.MessageTypeSize:]))
 
     def on_connected(self):
         self.entity = self.entity_cls()

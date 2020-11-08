@@ -72,8 +72,8 @@ class NeptuneWSRpcWriter(NeptuneWriterBaseAbstract):
     def __init__(self, ws):
         self.ws = ws
 
-    def write(self, message_type: NeptuneMessageType, message):
-        asyncio.create_task(self.ws.send_str('{:02d}{}'.format(message_type, message)))
+    def write(self, message):
+        asyncio.create_task(self.ws.send_str('{:02d}{}'.format(13, message)))
 
     def close(self):
         asyncio.create_task(self.ws.close())
@@ -101,11 +101,7 @@ class NeptuneWSRpc(NeptuneServiceSkeleton, NeptuneWSRouteMixin):
             async for msg in ws:
                 if msg.type == aiohttp.WSMsgType.TEXT or msg.type == aiohttp.WSMsgType.BINARY:
                     mtype, mpayload = int(msg.data[:2]), msg.data[2:]
-                    np_message = NeptuneMessageTuple(
-                        type=mtype,
-                        message=mpayload
-                    )
-                    self.messager_manager.on_message(messager_id, np_message)
+                    self.messager_manager.on_message(messager_id, mpayload)
                 else:
                     self.get_logger().debug(f'unexpected type {msg.typ}')
                     break

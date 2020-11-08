@@ -23,11 +23,11 @@ class NeptuneRPCServiceImp(proto.NeptuneMessageStream):
                 message = await context.read()
                 if message == agrpc.EOF:
                     break
-                np_message = NeptuneMessageTuple(
-                    type=message.MsgType,
-                    message=message.Payload
-                )
-                await self.service.MessageArrived(stream_id, np_message)
+
+                mtype = message.MsgType,
+                payload = message.Payload
+
+                await self.service.MessageArrived(stream_id, payload)
         finally:
             await self.service.MessageStreamEnd(stream_id)
 
@@ -36,10 +36,10 @@ class NeptuneGRPCRPCWriter(NeptuneWriterBaseAbstract):
     def __init__(self, grpc_ctx):
         self.raw_stream = grpc_ctx
 
-    def write(self, message_type, message):
+    def write(self, message):
         asyncio.create_task(self.raw_stream.write(
             proto.NeptuneMessage(
-                MsgType=message_type,
+                MsgType=13,
                 Payload=message
             )
         ))
@@ -95,12 +95,11 @@ class NeptuneGRPCRPCClient(NeptuneServiceSkeleton):
                 if message == agrpc.EOF:
                     break
 
-                np_message = NeptuneMessageTuple(
-                    type=message.MsgType,
-                    message=message.Payload
-                )
-                print('read stream recv message:', np_message)
-                self.message_manager.on_message(stream_id, np_message)
+                type = message.MsgType,
+                payload = message.Payload
+
+                print('read stream recv message:', payload)
+                self.message_manager.on_message(stream_id, payload)
         except Exception as e:
             self.get_logger().error('grpc stream read error {}'.format(traceback.format_exc()))
         finally:

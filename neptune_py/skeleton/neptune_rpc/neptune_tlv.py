@@ -2,7 +2,7 @@ import asyncio
 import traceback
 from neptune_py.skeleton.skeleton import NeptuneServiceSkeleton
 from neptune_py.skeleton.messager import (
-    NeptuneWriterBaseAbstract, NeptuneMessageTuple, NeptuneMessageType
+    NeptuneWriterBaseAbstract, NeptuneMessageType
 )
 
 import struct
@@ -10,9 +10,10 @@ import collections
 
 
 class TLV:
-    _format = '!Hi'
+    _format = '!HI'
     meta_size = struct.calcsize(_format)
     tlv = collections.namedtuple('tlv_tuple', 'tag length')
+    MagicTag = 13
 
     @classmethod
     def pack(cls, tag, data):
@@ -32,8 +33,8 @@ class TlvWriter(NeptuneWriterBaseAbstract):
         self.writer = writer
         self.closed = False
 
-    def write(self, message_type: NeptuneMessageType, message):
-        self.writer.write(TLV.pack(message_type, message))
+    def write(self, message):
+        self.writer.write(TLV.pack(TLV.MagicTag, message))
 
     def close(self):
         if self.closed:
@@ -68,11 +69,9 @@ class NeptuneTlvBase(NeptuneServiceSkeleton):
             while True:
                 meta = await reader.readexactly(TLV.meta_size)
                 tlv = TLV.unpack(meta)
-                print(tlv)
+                # print(tlv)
                 data = await reader.readexactly(tlv.length)
-
-                np_message = NeptuneMessageTuple(type=tlv.tag, message=data)
-                self.messager_manager.on_message(messager_id, np_message)
+                self.messager_manager.on_message(messager_id, data)
         except asyncio.IncompleteReadError as e:
             if e.partial:
                 # empty data indicates peer closed the connection, otherwise the data
@@ -98,6 +97,8 @@ class NeptuneTlvService(NeptuneTlvBase):
     tlv message server
     """
     async def logic(self):
+        # https://docs.python.org/3.6/library/asyncio-protocol.html
+        # 'Changed in version 3.6: The socket option TCP_NODELAY is now set by default.'
         server = await asyncio.start_server(self.connection_handler, self.host, self.port)
         async with server:
             self.get_logger().debug(f'NeptuneTlvService {self.name} starts to server')

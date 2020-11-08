@@ -45,15 +45,16 @@ class WebSocketEcho:
 
 class EchoEntity(NeptuneEntityBase):
     def on_message(self, message):
-        print(message)
+        # print(message)
         self.messager.write_message(13, message.message)
 
 
 class BeepBeepEntity(NeptuneEntityBase):
     def on_connected(self):
         async def beepbeep():
-            for i in range(4000, 5000):
+            for i in range(10):
                 self.messager.write_message(13, ("hello" + str('13'*i)).encode())
+                await asyncio.sleep(1)
             self.messager.close()
         asyncio.create_task(beepbeep())
 

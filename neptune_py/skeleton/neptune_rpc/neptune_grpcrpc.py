@@ -2,7 +2,7 @@ import asyncio
 import neptune_py.proto as proto
 import grpc.experimental.aio as agrpc
 import traceback
-from neptune_py.skeleton.grpc_service import NeptuneGRPCService
+from neptune_py.skeleton.neptune_rpc.grpc_service import NeptuneGRPCService
 from neptune_py.skeleton.skeleton import NeptuneServiceSkeleton
 from neptune_py.skeleton.messager import (
     NeptuneMessagerManager, NeptuneWriterBaseAbstract, NeptuneMessageTuple

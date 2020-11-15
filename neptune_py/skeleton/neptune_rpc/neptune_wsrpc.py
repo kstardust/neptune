@@ -27,7 +27,14 @@ class NeptuneWSRouteMixin:
 
 
 class NeptuneWSService(NeptuneServiceSkeleton):
+    """
+    Example:
 
+    ws_server = NeptuneWSService('0.0.0.0', '1313')
+    wsrpc = NeptuneWSRpc('/13', self.client_manager)
+    ws_server.add_route(wsrpc)
+    ws_server.add_route(WebSocketEcho())
+    """
     def __init__(self, host, port, name=None):
         super().__init__(name)
         self.host = host
@@ -117,3 +124,23 @@ class NeptuneWSRpc(NeptuneServiceSkeleton, NeptuneWSRouteMixin):
 class NeptuneWSRpcClient(NeptuneServiceSkeleton):
     def __init__(self, address):
         raise NotImplementedError('server side doest support websocket client, alse it\'s not necessary.')
+
+
+# ------------------------ For Testing
+class WebSocketEcho:
+    def __init__(self):
+        self._route = "/echo"
+
+    def route(self):
+        return (self._route, self.websocket_handler)
+
+    async def websocket_handler(self, request):
+        ws = web.WebSocketResponse()
+        await ws.prepare(request)
+        async for msg in ws:
+            if msg.type == aiohttp.WSMsgType.TEXT or msg.type == aiohttp.WSMsgType.BINARY:
+                print(f"received: {msg.data}")
+                await ws.send_str(msg.data)
+            else:
+                self.get_logger().debug(f'unexpected type {msg.typ}')
+                break

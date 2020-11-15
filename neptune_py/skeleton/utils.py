@@ -1,3 +1,7 @@
+import asyncio
+from neptune_py.skeleton.skeleton import NeptuneServiceSkeleton
+
+
 class AnsiColor:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -11,3 +15,13 @@ class AnsiColor:
 
 def color_print(color: AnsiColor, *args):
     print(color, *args, AnsiColor.ENDC)
+
+
+class Introspector(NeptuneServiceSkeleton):
+    def __init__(self):
+        super().__init__('Introspector')
+
+    async def logic(self):
+        while True:
+            self.get_logger().debug(f'current tasks(coroutines) {len(asyncio.all_tasks())}')
+            await asyncio.sleep(5)

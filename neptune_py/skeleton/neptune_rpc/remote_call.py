@@ -77,6 +77,7 @@ class NeptuneNestedRpc:
     def execute(self, call_chain_data):
         slot = self._entity
         call_chain = self.decoder(call_chain_data)
+        print(call_chain)
         for call in call_chain:
             func_name, args = call
             slot = getattr(slot, func_name)(*args)

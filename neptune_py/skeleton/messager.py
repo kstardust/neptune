@@ -3,11 +3,13 @@ import abc
 import struct
 from neptune_py.skeleton import utils
 
-NeptuneMessageTuple = collections.namedtuple('NeptuneMessageTuple', ['type', 'message'])
+NeptuneMessageTuple = collections.namedtuple('NeptuneMessageTuple', ['mtype', 'message'])
 
 
 class NeptuneMessageType:
-    NeptuneMessageTypeCall = 1
+    NeptuneMessageTypeNone = 0
+    NeptuneMessageTypeNornmal = 1
+    NeptuneMessageTypeCall = 2
 
 
 class NeptuneWriterBaseAbstract:
@@ -36,12 +38,11 @@ class NeptuneMessager:
 
     def on_message(self, message):
         if len(message) < self.MessageTypeSize:
-            # TODO: log
             utils.color_print(utils.AnsiColor.FAIL, "invalid message, cannot unpack message type")
             self.close()
             return
-        mtype = struct.unpack(self.MessageTypeFormat, message[:self.MessageTypeSize])
-        self.entity.on_message(NeptuneMessageTuple(type=mtype, message=message[self.MessageTypeSize:]))
+        mtype, *_ = struct.unpack(self.MessageTypeFormat, message[:self.MessageTypeSize])
+        self.entity.on_message(NeptuneMessageTuple(mtype=mtype, message=message[self.MessageTypeSize:]))
 
     def on_connected(self):
         self.entity = self.entity_cls()

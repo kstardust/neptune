@@ -1,30 +1,27 @@
 import asyncio
 
-from neptune_py.skeleton.skeleton import NeptuneServerSkeleton
-from neptune_py.skeleton.utils import Introspector
-from neptune_py.skeleton.messager import NeptuneMessagerManager
-from neptune_py.skeleton.neptune_rpc.neptune_tlv import NeptuneTlvService
-from .entity.game_server_player import GameServerPlayer
+from .game_server import Neptune
 
 
-class Neptune:
-    def __init__(self, name):
-        self.name = name
-        self.init_services()
+# class TestingGameEntity(NeptuneGameEntity):
+#     def Update(self, time_delta):
+#         return
+#         print(f"Update {self.entity_id} {time_delta}")
 
-    def init_services(self):
-        np_server = NeptuneServerSkeleton(self.name)
-        self.client_manager = NeptuneMessagerManager(GameServerPlayer)
+#     def FixedUpdate(self):
+#         return
+#         print(f"FixedUpdate {self.entity_id}")
 
-        np_server.add_service(Introspector())
-        np_server.add_service(NeptuneTlvService('0.0.0.0', '1313', self.client_manager))
+#     def LateUpdate(self, time_delta):
+#         return
+#         print(f"LateUpdate {self.entity_id} {time_delta}")
 
-        self.np_server = np_server
 
-    async def run(self):
-        await asyncio.gather(
-            self.np_server.run()
-        )
+# from neptune_py.skeleton.entity.entity import NeptuneEntityBase
+# class EchoEntity(NeptuneEntityBase):
+#     def on_message(self, message):
+#         print(message)
+#         self.messager.write_message(message.mtype, message.message)
 
 
 if __name__ == '__main__':

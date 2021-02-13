@@ -17,11 +17,30 @@ class NeptuneRpcError:
     class NeptuneRpcInvalidMessager(Exception):
         pass
 
+    class NeptuneRpcInvalidRpcFunc(Exception):
+        pass
+
+
+def Utf8JsonEncoder(message):
+    return json.dumps(message).encode('utf-8')
+
+
+def Utf8JsonDecoder(message):
+    return json.loads(message.decode('utf-8'))
+
+
+def JsonStringEncoder(message):
+    return json.dumps(message)
+
+
+def JsonStringDecoder(message):
+    return json.loads(message)
+
 
 class NeptuneNestedRpcStub:
     NestedNeptuneRpcPrefix = 'Nested'
 
-    def __init__(self, sender, parent=None, encoder=json.dumps):
+    def __init__(self, sender, parent=None, encoder=Utf8JsonEncoder):
         '''
         a sender can write message(e.g. sending network package)
         i.e. sender is a transmitter for remote call
@@ -70,7 +89,7 @@ class NeptuneNestedRpcStub:
 
 
 class NeptuneNestedRpc:
-    def __init__(self, entity, decoder=json.loads):
+    def __init__(self, entity, decoder=Utf8JsonDecoder):
         self._entity = entity
         self.decoder = decoder
 
@@ -78,9 +97,13 @@ class NeptuneNestedRpc:
         slot = self._entity
         call_chain = self.decoder(call_chain_data)
         print(call_chain)
-        for call in call_chain:
+        for i, call in enumerate(call_chain, 1):
             func_name, args = call
             slot = getattr(slot, func_name)(*args)
+            if i == len(call_chain):
+                continue
+            if slot is None or not getattr(slot, "__nprpc__", None):
+                raise NeptuneRpcError.NeptuneRpcInvalidRpcFunc(func_name)
 
 
 # ----------------------- Test Code

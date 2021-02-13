@@ -7,17 +7,9 @@ from neptune_py.skeleton.neptune_rpc.neptune_wsrpc import (
 )
 from neptune_py.skeleton.neptune_rpc.neptune_tlv import NeptuneTlvService, NeptuneTlvClient
 from neptune_py.skeleton.entity.entity import NeptuneEntityBase
+from neptune_py.skeleton.introspector import Introspector
 from . test_entity import TestingClientEntity
 
-
-class Introspector(NeptuneServiceSkeleton):
-    def __init__(self):
-        super().__init__('Introspector')
-
-    async def logic(self):
-        while True:
-            self.get_logger().debug(f'current tasks(coroutines) {len(asyncio.all_tasks())}')
-            await asyncio.sleep(5)
 
 
 class EchoEntity(NeptuneEntityBase):

@@ -1,6 +1,9 @@
 import uuid
 import logging
 import asyncio
+import sys
+
+G = None
 
 
 class NeptuneServiceSkeleton:
@@ -73,7 +76,11 @@ class NeptuneServiceSkeleton:
 
 class NeptuneServerSkeleton:
     def __init__(self, server_name):
-        self.services = []
+        global G
+        assert G is None
+        G = self
+
+        self.services = {}
         self.server_name = server_name
         self._init_logger()
 
@@ -89,22 +96,19 @@ class NeptuneServerSkeleton:
         )
 
     def add_service(self, service: NeptuneServiceSkeleton):
-        self.services.append(service)
+        self.services[service.name] = service
 
     def init_services(self):
-        for service in self.services:
+        for service in self.services.values():
             service.init_service(self)
 
     def find_service(self, service_name):
-        for service in self.services:
-            if service.name == service_name:
-                return service
-        return None
+        return self.services.get(service_name)
 
     async def run(self):
         self.init_services()
         task = asyncio.gather(
-            *(service.run() for service in self.services),
+            *(service.run() for service in self.services.values()),
         )
         ret = None
         try:

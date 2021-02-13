@@ -10,6 +10,7 @@ class NeptuneMessageType:
     NeptuneMessageTypeNone = 0
     NeptuneMessageTypeNornmal = 1
     NeptuneMessageTypeCall = 2
+    NeptuneMessageTypeForward = 3
 
 
 class NeptuneWriterBaseAbstract:
@@ -45,7 +46,7 @@ class NeptuneMessager:
         self.entity.on_message(NeptuneMessageTuple(mtype=mtype, message=message[self.MessageTypeSize:]))
 
     def on_connected(self):
-        self.entity = self.entity_cls()
+        self.entity = self.entity_cls(self.id_)
         self.entity.bind_messager(self)
 
     def on_error(self, error):
@@ -63,12 +64,19 @@ class NeptuneMessagerManager:
         self.entity_cls = entity_cls
         self.messagers = {}
 
+    def OnConnected(self, mid):
+        pass
+
+    def OnClose(self, mid):
+        pass
+
     def on_connected(self, id_, writer: NeptuneWriterBaseAbstract):
         messager = NeptuneMessager(
             id_, self, writer, self.entity_cls
         )
         messager.on_connected()
         self.messagers[id_] = messager
+        self.OnConnected(messager)
 
     def on_message(self, id_, message):
         messager = self.messagers.get(id_)
@@ -81,6 +89,7 @@ class NeptuneMessagerManager:
     def on_disconnected(self, id_):
         utils.color_print(utils.AnsiColor.FAIL, f'disconnected============{id_}')
         self.remove_messager(id_)
+        self.OnClose(id_)
 
     def remove_messager(self, id_):
         messager = self.messagers.pop(id_, None)

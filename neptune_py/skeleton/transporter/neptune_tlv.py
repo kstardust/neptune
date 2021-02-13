@@ -81,7 +81,7 @@ class NeptuneTlvBase(NeptuneServiceSkeleton):
             self.get_logger().error(traceback.format_exc())
         finally:
             self.get_logger().debug(f'{peername} closed')
-            self.messager_manager.on_disconnected(self.messager_id)
+            self.messager_manager.on_disconnected(messager_id)
             writer.close()
             await writer.wait_closed()
 

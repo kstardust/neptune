@@ -1,6 +1,9 @@
 from neptune_py.skeleton.entity.entity import NeptuneEntityBase
 import neptune_py.skeleton.neptune_rpc.remote_call as remote_call
+from neptune_py.skeleton.tick import NeptuneTick
 from neptune_py.skeleton.messager import NeptuneMessageType
+from neptune_py.skeleton.messager import NeptuneMessagerManager
+from neptune_py.skeleton.game import NeptuneGameEntity
 import json
 
 
@@ -44,3 +47,24 @@ class GameServerPlayer(NeptuneEntityBase):
 
     def PlayerRpcTesting(self, a, b, c):
         self.rpc_stub.GameServerRpcRespTesting(a, b, c)
+
+    def PlayerRpcJoinBattle(self, battle_id):
+        print("PlayerRpcJoinBattle")
+
+
+class GameRoom(NeptuneGameEntity):
+    def __init__(self):
+        self.tick = None
+
+    def OnActive(self):
+        if self.tick is None:
+            self.tick = NeptuneTick(self.game_master.frame_rate)
+
+    def FixedUpdate(self):
+        self.tick.Update()
+
+
+class NeptuneGamePlayerManager(NeptuneMessagerManager):
+    def __init__(self):
+        super().__init__(GameServerPlayer)
+        self.room = GameRoom()

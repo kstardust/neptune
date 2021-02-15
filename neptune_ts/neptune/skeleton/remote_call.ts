@@ -25,7 +25,7 @@ interface INeptuneRpcDecoder {
 }
 
 export function NeptuneRpc(...reserved: any[]) {
-    return function (target: object, methodName: string, descriptor: PropertyDescriptor) {
+    return function (target: INeptuneRpcNode, methodName: string, descriptor: PropertyDescriptor) {
         return {
             value: function (this: any, ...args: any[]) {
                 this.call_chain.push([methodName, args]);                

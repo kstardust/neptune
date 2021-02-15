@@ -43,10 +43,10 @@ export default class Helloworld extends cc.Component {
     start () {
         // init logic
         this.label.string = this.text;
-        //let np_rpc_stub = new NeptuneRpcStringStub(null);
+        let np_rpc_stub = new NeptuneRpcStringStub({SendMessage: (msg) => console.log("msgstr": msg)});
         let np_rpc = new NeptuneRpcExecutor(this);
-        //let message = np_rpc_stub.RemoteCall("TestRpc", 13, "13", [1, 3]).Perform();
-        //np_rpc.Execute(message);
+        let message = np_rpc_stub.RemoteCall("TestRpc", 13, "13", [1, 3]).Perform();
+        np_rpc.Execute(message);
         let np_stub = new MyNeptuneRpcStub({SendMessage: (msg) => console.log("msg", msg)});
         np_stub.FooRpc.TestRpc(13, "hello").Perform();
         np_stub.FooRpc.GetBar().NestedRpc([1, 2]).Perform();

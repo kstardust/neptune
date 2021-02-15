@@ -5,8 +5,8 @@
 // Learn life-cycle callbacks:
 //  - https://docs.cocos.com/creator/manual/en/scripting/life-cycle-callbacks.html
 
-interface INeptuneMessager {
-//    send_message(data: string);
+interface INeptuneRpcSender {
+    SendMessage(data: string);
 }
 
 interface INeptuneRpcNode {
@@ -80,16 +80,18 @@ export class NeptuneRpcExecutor {
 // stub-class-based rpc stub
 export abstract class NeptuneRpcStub {
 
-    constructor(public messager: INeptuneMessager, public encoder: INeptuneRpcEncoder=JSON.stringify) {
+    constructor(public messager: INeptuneRpcSender, public encoder: INeptuneRpcEncoder=JSON.stringify) {
         this.InitRpcStubs();
     }
 
     abstract InitRpcStubs(): void;
 
     RemoteCall(call_chain: any[]): string {
-        let result = this.encoder(call_chain);
-        console.log("RemoteCall: ", result)
-        return result;
+        let message = this.encoder(call_chain);
+        console.debug("RemoteCall: ", message)
+        this.messager.SendMessage(message);
+        // for debug purpose
+        return message;
     }
 }
 
@@ -99,7 +101,7 @@ export class NeptuneRpcStringStub {
     protected call_chain: any[] = [];
 
     constructor(
-        public messager: INeptuneMessager,
+        public messager: INeptuneRpcSender,
         public encoder: INeptuneRpcEncoder=JSON.stringify,
         protected parent: NeptuneRpcStringStub=null) {
             if (parent) {
@@ -127,7 +129,7 @@ export class NeptuneRpcStringStub {
     Perform(): string {
         let message = this.EncodeCallChain();
         this.call_chain.splice(0, this.call_chain.length);
-        //this.messager.SendMessage();
+        this.messager.SendMessage(message);
         console.log("perform call", message);
         return message;
     }

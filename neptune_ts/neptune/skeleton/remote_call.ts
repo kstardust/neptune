@@ -72,7 +72,7 @@ export class NeptuneRpcExecutor {
         for (let call_node of call_chain) {            
             let method: string = call_node[0];
             let args: any[] = call_node[1];                        
-            target = this.entity[method](args);
+            target = target[method].apply(target, args);
         }
     }
 }
@@ -86,7 +86,15 @@ export abstract class NeptuneRpcStub {
 
     abstract InitRpcStubs(): void;
 
+    SetMessager(messager: INeptuneRpcSender) {
+        this.messager = messager;
+    }
+
     RemoteCall(call_chain: any[]): string {
+        if (this.messager == null) {
+            console.error("cannot perform rpc, messager is null");
+            return
+        }
         let message = this.encoder(call_chain);
         console.debug("RemoteCall: ", message)
         this.messager.SendMessage(message);
@@ -104,11 +112,15 @@ export class NeptuneRpcStringStub {
         public messager: INeptuneRpcSender,
         public encoder: INeptuneRpcEncoder=JSON.stringify,
         protected parent: NeptuneRpcStringStub=null) {
-            if (parent) {
+            if (parent != null) {
                 this.encoder = parent.encoder;
                 this.messager = parent.messager;
             }
         }
+
+    SetMessager(messager: INeptuneRpcSender) {
+        this.messager = messager;
+    }
 
     RemoteCall(funcname: string, ...args: any[]): NeptuneRpcStringStub {
         this.call_chain.push([funcname, args]);

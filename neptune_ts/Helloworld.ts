@@ -1,4 +1,6 @@
 import { NeptuneRpc, NeptuneRpcStringStub, NeptuneRpcExecutor, NeptuneRpcStubNode, NeptuneRpcStub } from "./neptune/skeleton/remote_call";
+import { NeptuneWSMessager } from "./neptune/skeleton/ws_messager";
+import { NeptuneRpcEntityBase } from "./neptune/skeleton/net_entity"
 
 const {ccclass, property} = cc._decorator;
 
@@ -24,12 +26,46 @@ class FooRpcStub extends NeptuneRpcStubNode {
 class MyNeptuneRpcStub extends NeptuneRpcStub {
     // add root stub declarations at here
     FooRpc: FooRpcStub;
+    MirrorRpc: MirrorClientRpc;
 
     InitRpcStubs() {
         // create root stubs at here
         this.FooRpc = new FooRpcStub(this);
+        this.MirrorRpc = new MirrorClientRpc(this);
     }
 }
+
+class MirrorClientRpc extends NeptuneRpcStubNode {
+    @NeptuneRpc()
+    TestRpc(a: number, b: string) {
+        return new NeptuneRpcStubNode(null, this);
+    }
+
+    @NeptuneRpc()
+    GetLayer2(): MirrorClientRpcLayer2 {
+        return new MirrorClientRpcLayer2(null, this);
+    }
+}
+
+class MirrorClientRpcLayer2 extends NeptuneRpcStubNode {
+    @NeptuneRpc()
+    TestLayer2Rpc(a: number, b: string) {
+        return new NeptuneRpcStubNode(null, this);
+    }
+}
+
+class MirrorClientEntity extends NeptuneRpcEntityBase {
+    TestRpc(a: number, b: string) {
+        console.log("TestRpc", a, b);
+    }
+
+    GetLayer2() {
+        return {TestLayer2Rpc: function (a: number, b: string) {
+            console.log("testlayer2rpc", a, b);
+        }};
+    }
+}
+
 
 @ccclass
 export default class Helloworld extends cc.Component {
@@ -43,17 +79,17 @@ export default class Helloworld extends cc.Component {
     start () {
         // init logic
         this.label.string = this.text;
-        let np_rpc_stub = new NeptuneRpcStringStub({SendMessage: (msg) => console.log("msgstr": msg)});
-        let np_rpc = new NeptuneRpcExecutor(this);
-        let message = np_rpc_stub.RemoteCall("TestRpc", 13, "13", [1, 3]).Perform();
-        np_rpc.Execute(message);
-        let np_stub = new MyNeptuneRpcStub({SendMessage: (msg) => console.log("msg", msg)});
-        np_stub.FooRpc.TestRpc(13, "hello").Perform();
-        np_stub.FooRpc.GetBar().NestedRpc([1, 2]).Perform();
-    }
-        
-    TestRpc(a: number, b: string, c: number[]) {
-        console.log("TestRpc", a, b, c);
+
+        let rpcStub = new MyNeptuneRpcStub({SendMessage: msg => console.error("stub messager not ready")});
+        //let np_rpc_stub = new NeptuneRpcStringStub({SendMessage: (msg) => console.log("msgstr", msg)});        
+        let mirrorEntity = new MirrorClientEntity();
+        mirrorEntity.SetRpcStub(rpcStub);
+        //mirrorEntity.SetRpcStub(np_rpc_stub);
+        let msg = new NeptuneWSMessager(mirrorEntity);
+        msg.Connect("ws://echo.websocket.org");
+        setTimeout(() => rpcStub.MirrorRpc.TestRpc(1, "13").Perform(), 5000);        
+        setTimeout(() => rpcStub.MirrorRpc.GetLayer2().TestLayer2Rpc(1, "13").Perform(), 5000);                
+        //setTimeout(() => np_rpc_stub.RemoteCall("GetLayer2").RemoteCall("TestLayer2Rpc", 1, "13").Perform(), 5000);
     }
 
     update(dt: number) {

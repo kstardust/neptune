@@ -80,7 +80,8 @@ class NeptuneWSRpcWriter(NeptuneWriterBaseAbstract):
         self.ws = ws
 
     def write(self, message):
-        asyncio.create_task(self.ws.send_str('{:02d}{}'.format(13, message)))
+        # since i dont how to parse struct in typescript, I trimmed mtype here.
+        asyncio.create_task(self.ws.send_str(message))
 
     def close(self):
         asyncio.create_task(self.ws.close())
@@ -107,7 +108,7 @@ class NeptuneWSRpc(NeptuneServiceSkeleton, NeptuneWSRouteMixin):
         try:
             async for msg in ws:
                 if msg.type == aiohttp.WSMsgType.TEXT or msg.type == aiohttp.WSMsgType.BINARY:
-                    mtype, mpayload = int(msg.data[:2]), msg.data[2:]
+                    mpayload = msg.data
                     self.messager_manager.on_message(messager_id, mpayload)
                 else:
                     self.get_logger().debug(f'unexpected type {msg.typ}')

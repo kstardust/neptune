@@ -25,12 +25,12 @@ class FooRpcStub extends NeptuneRpcStubNode {
 
 class MyNeptuneRpcStub extends NeptuneRpcStub {
     // add root stub declarations at here
-    FooRpc: FooRpcStub;
+    ServerRpc: FooRpcStub;
     MirrorRpc: MirrorClientRpc;
 
     InitRpcStubs() {
         // create root stubs at here
-        this.FooRpc = new FooRpcStub(this);
+        this.ServerRpc = new FooRpcStub(this);
         this.MirrorRpc = new MirrorClientRpc(this);
     }
 }
@@ -55,8 +55,10 @@ class MirrorClientRpcLayer2 extends NeptuneRpcStubNode {
 }
 
 class MirrorClientEntity extends NeptuneRpcEntityBase {
-    TestRpc(a: number, b: string) {
-        console.log("TestRpc", a, b);
+    rpcStub: MyNeptuneRpcStub;
+    TestRpc(a: number, b: string, c: number[]) {
+        console.log("TestRpc", a, b, c);
+        this.rpcStub.ServerRpc.TestRpc(1, "13").Perform();
     }
 
     GetLayer2() {
@@ -86,9 +88,11 @@ export default class Helloworld extends cc.Component {
         mirrorEntity.SetRpcStub(rpcStub);
         //mirrorEntity.SetRpcStub(np_rpc_stub);
         let msg = new NeptuneWSMessager(mirrorEntity);
-        msg.Connect("ws://echo.websocket.org");
-        setTimeout(() => rpcStub.MirrorRpc.TestRpc(1, "13").Perform(), 5000);        
-        setTimeout(() => rpcStub.MirrorRpc.GetLayer2().TestLayer2Rpc(1, "13").Perform(), 5000);                
+        //msg.Connect("ws://echo.websocket.org");
+        msg.Connect("ws://localhost:1317/13");        
+
+        //setTimeout(() => rpcStub.MirrorRpc.TestRpc(1, "13").Perform(), 5000);        
+        //setTimeout(() => rpcStub.MirrorRpc.GetLayer2().TestLayer2Rpc(1, "13").Perform(), 5000);                
         //setTimeout(() => np_rpc_stub.RemoteCall("GetLayer2").RemoteCall("TestLayer2Rpc", 1, "13").Perform(), 5000);
     }
 

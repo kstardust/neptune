@@ -35,9 +35,19 @@ class NeptuneMessager:
         self.entity = None
 
     def write_message(self, mtype, message):
-        self.writer.write(struct.pack(self.MessageTypeFormat, mtype) + message)
+        if mtype is None:
+            # for client side, i dont know how to parse binary data in typescript
+            # notice that message is a string here
+            self.writer.write(message)
+        else:
+            self.writer.write(struct.pack(self.MessageTypeFormat, mtype) + message)
 
     def on_message(self, message):
+        if isinstance(message, str):
+            # for client side websocket
+            self.entity.on_message(NeptuneMessageTuple(mtype=NeptuneMessageType.NeptuneMessageTypeCall, message=message))
+            return
+
         if len(message) < self.MessageTypeSize:
             utils.color_print(utils.AnsiColor.FAIL, "invalid message, cannot unpack message type")
             self.close()

@@ -36,7 +36,7 @@ export class NetEntityBase implements INeptuneNetEntity {
 
 export class NeptuneRpcEntityBase extends NetEntityBase {
     rpcExecutor: NeptuneRpcExecutor;
-    private rpcStub: any;
+    rpcStub: any;
 
     constructor() {
         super();
@@ -48,6 +48,7 @@ export class NeptuneRpcEntityBase extends NetEntityBase {
     }
 
     OnMessage(msg: string) {
+        console.log(msg);
         if (this.rpcExecutor == null) {
             console.error("entity doesnt have a rpc executor");
             return;

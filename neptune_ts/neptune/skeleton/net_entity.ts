@@ -48,7 +48,7 @@ export class NeptuneRpcEntityBase extends NetEntityBase {
     }
 
     OnMessage(msg: string) {
-        console.log(msg);
+        console.debug(msg);
         if (this.rpcExecutor == null) {
             console.error("entity doesnt have a rpc executor");
             return;

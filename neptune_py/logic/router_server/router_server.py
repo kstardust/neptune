@@ -57,17 +57,22 @@ class RouterEntityManager(NeptuneServiceSkeleton):
     def Forward(self, dest, message):
         # forward to dest
         subnet, _ = dest.split(':', maxsplit=1)
-        subnet += ':'
+        subnet += '::'
 
         if subnet != self.local_addr:
             self.get_logger().error("should forward, not yet implmented {} {}".format(subnet, self.local_addr))
             return
 
+        serverDest, _ = dest.rsplit(':', maxsplit=1)
+        serverDest += ':'
+
         for peer in self.m_setPeers:
-            if peer.PeerAddr == dest:
+            if peer.PeerAddr == serverDest:
                 peer.send_message(NeptuneMessageType.NeptuneMessageTypeForward, message)
                 return
         # forward to router
+
+        self.get_logger().error("unknown destination: {}".format(dest))
 
 
 class NeptuneRouter:
@@ -79,7 +84,7 @@ class NeptuneRouter:
         np_server = NeptuneServerSkeleton(self.name)
         np_server.profile = {
             "addr4router": ('127.0.0.1', '1315'),
-            "local_addr": "13:"
+            "local_addr": "13::"
         }
         # self.client_manager = NeptuneMessagerManager(TestingClientEntity)
         self.port_manager = NeptuneMessagerManager(NeptuneRouterPort)

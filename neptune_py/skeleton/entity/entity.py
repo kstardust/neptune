@@ -19,6 +19,7 @@ class NeptuneEntityBase:
 
     def set_local_addr(self, addr):
         self.local_addr = addr
+        self.subnet, *_ = addr.split(":")
 
     def bind_messager(self, messager):
         utils.color_print(utils.AnsiColor.OKGREEN, 'bind messager')
@@ -73,11 +74,18 @@ class NeptuneEntityBase:
         utils.color_print(utils.AnsiColor.WARNING, 'messager lost')
 
     def iamthedest(self, dest):
-        print(dest, self.local_addr)
         return dest == self.local_addr
+
+    def iamtheserver(self, dest):
+        serverDest, _ = dest.rsplit(":", maxsplit=1)
+        serverDest += ":"
+        return serverDest == self.local_addr
 
     def forward(self, dest, message):
         raise NotImplementedError
+
+    def forward_entity(self, GlobalID, payload):
+        print("forward_entity", GlobalID, payload)
 
     def on_message(self, message: NeptuneMessageTuple):
         if message.mtype == NeptuneMessageType.NeptuneMessageTypeCall:
@@ -94,8 +102,13 @@ class NeptuneEntityBase:
             destAddr = dictMessage[EUniversalMessageField.Destination]
             if self.iamthedest(destAddr):
                 payload = dictMessage[EUniversalMessageField.Payload].encode('utf-8')
-                srcAddr = dictMessage[EUniversalMessageField.Source]
+                # srcAddr = dictMessage[EUniversalMessageField.Source]
                 self.rpc_executor.execute(payload)
+            elif self.iamtheserver(destAddr):
+                payload = dictMessage[EUniversalMessageField.Payload].encode('utf-8')
+                # srcAddr = dictMessage[EUniversalMessageField.Source]
+                _, GlobalID = destAddr.rsplit(':', maxsplit=1)
+                self.forward_entity(GlobalID, payload)
             else:
                 self.forward(destAddr, message.message)
             return

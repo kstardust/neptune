@@ -20,11 +20,36 @@ class NeptuneRouterInGameServer(NeptuneEntityBase):
     @rpc()
     def OnRegisteredInRouter(self):
         print("OnRegisteredInRouter")
-        self.GetUniversalRpcStub("13:game1").TestUniversalRpc()
+        self.GetUniversalRpcStub("13:game1:").TestUniversalRpc()
 
     @rpc()
     def TestUniversalRpc(self):
         print("TestUniversalRpc")
+
+    def forward_entity(self, GlobalID, message):
+        Entity = sk.G.GetEntity(GlobalID)
+        if Entity:
+            Entity.rpc_executor.execute(message)
+            return
+        self.logger.error("no such entity: {}".format(GlobalID))
+
+
+class GameServerSkeleton(NeptuneServerSkeleton):
+    def init(self):
+        self.profile = {
+            "addr4client": ('127.0.0.1', '1315'),
+            "local_addr": "13:game1:"
+        }
+        self.m_dictEntities = {}
+
+    def GetEntity(self, GlobalID):
+        return self.m_dictEntities.get(GlobalID)
+
+    def AddEntity(self, GlobalID, Entity):
+        self.m_dictEntities[GlobalID] = Entity
+
+    def RemoveEntity(self, GlobalID):
+        self.m_dictEntities.pop(GlobalID, None)
 
 
 class Neptune:
@@ -33,12 +58,8 @@ class Neptune:
         self.init_services()
 
     def init_services(self):
-        np_server = NeptuneServerSkeleton(self.name)
-        np_server.profile = {
-            "addr4client": ('127.0.0.1', '1315'),
-            "local_addr": "13:game1"
-        }
-
+        np_server = GameServerSkeleton(self.name)
+        np_server.init()
         # self.client_manager = NeptuneGamePlayerManager()
 
         # game_master = GameMaster(60)

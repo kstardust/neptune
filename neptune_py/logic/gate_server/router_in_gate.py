@@ -12,8 +12,9 @@ class NeptuneRouterInGate(NeptuneEntityBase):
 
     def on_connected(self):
         self.rpc_stub.RegisterPeerInRouter(self.m_dictProfile)
+        sk.G.SetRouter(self)
 
     @rpc()
     def OnRegisteredInRouter(self):
         print("OnRegisteredInRouter")
-        self.GetUniversalRpcStub("13:game1").TestUniversalRpc()
+        self.GetUniversalRpcStub("13:game1:").TestUniversalRpc()

@@ -20,6 +20,12 @@ class NeptuneRpcError:
     class NeptuneRpcInvalidRpcFunc(Exception):
         pass
 
+    class NeptuneRpcMissingRpcFunc(Exception):
+        pass
+
+    class NeptuneRpcMissingSlot(Exception):
+        pass
+
 
 def Utf8JsonEncoder(message):
     return json.dumps(message).encode('utf-8')
@@ -99,11 +105,19 @@ class NeptuneNestedRpc:
         print(call_chain)
         for i, call in enumerate(call_chain, 1):
             func_name, args = call
-            slot = getattr(slot, func_name)(*args)
+            func = getattr(slot, func_name)
+            if func is None:
+                raise NeptuneRpcError.NeptuneRpcMissingRpcFunc(func_name)
+
+            # if not getattr(func, "__nprpc__", None):
+            #     raise NeptuneRpcError.NeptuneRpcInvalidRpcFunc(func_name)
+
+            slot = func(*args)
             if i == len(call_chain):
                 continue
-            if slot is None or not getattr(slot, "__nprpc__", None):
-                raise NeptuneRpcError.NeptuneRpcInvalidRpcFunc(func_name)
+
+            if slot is None:
+                raise NeptuneRpcError.NeptuneRpcMissingSlot(func_name)
 
 
 # ----------------------- Test Code

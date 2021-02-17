@@ -1,4 +1,5 @@
-import { Neptune, SetG, G } from "./neptune/skeleton/neptune";
+import { SK } from "./neptune/global";
+import { Neptune  } from "./neptune/skeleton/neptune";
 
 const {ccclass, property} = cc._decorator;
 
@@ -15,8 +16,8 @@ export default class Helloworld extends cc.Component {
     start () {
         // init logic
         this.label.string = this.text;
-        SetG(new Neptune());
-        G().init();
+        SK.G = new Neptune();
+        SK.G.init();
     }
 
     update(dt: number) {

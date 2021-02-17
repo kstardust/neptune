@@ -3,18 +3,6 @@ import { NeptuneWSMessager } from "./ws_messager";
 import { NeptuneRpcEntityBase } from "./net_entity"
 
 
-export let _G: Neptune;
-
-export function SetG(G) {
-    console.log("set", G);
-    _G = G;
-}
-
-export function G() {
-    console.log("get", _G);
-    return _G;
-}
-
 class BarRpcStub extends NeptuneRpcStubNode {
     @NeptuneRpc()
     NestedRpc(z: number[]): NeptuneRpcStubNode {

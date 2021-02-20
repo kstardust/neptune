@@ -2,6 +2,7 @@ import uuid
 import logging
 import asyncio
 import sys
+from neptune_py.etc.config import get_profile
 
 G = None
 
@@ -83,6 +84,7 @@ class NeptuneServerSkeleton:
         self.services = {}
         self.server_name = server_name
         self._init_logger()
+        self.profile = get_profile(self.server_name)
 
     def _init_logger(self):
         logging.basicConfig(

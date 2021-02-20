@@ -25,7 +25,7 @@ from .game_server import Neptune
 
 
 if __name__ == '__main__':
-    np = Neptune('neptune')
+    np = Neptune('13:game1:')
     asyncio.run(np.run())
 
     # import yappi

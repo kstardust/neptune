@@ -5,6 +5,7 @@ from neptune_py.skeleton.neptune_rpc.decorator import rpc
 from neptune_py.skeleton.skeleton import NeptuneServerSkeleton
 from neptune_py.skeleton.messager import NeptuneMessagerManager
 from neptune_py.skeleton.transporter.neptune_tlv import NeptuneTlvClient
+from neptune_py.etc.config import get_profile
 
 
 class NeptuneRouterInGameServer(NeptuneEntityBase):
@@ -36,10 +37,6 @@ class NeptuneRouterInGameServer(NeptuneEntityBase):
 
 class GameServerSkeleton(NeptuneServerSkeleton):
     def init(self):
-        self.profile = {
-            "addr4client": ('127.0.0.1', '1315'),
-            "local_addr": "13:game1:"
-        }
         self.m_dictEntities = {}
 
     def GetEntity(self, GlobalID):
@@ -71,6 +68,9 @@ class Neptune:
         # np_server.add_service(game_master)
         # np_server.add_service(Introspector())
         # np_server.add_service(NeptuneTlvService('0.0.0.0', '1313', self.client_manager))
+        router_addr = np_server.profile.get('router_addr')
+        router_net_addr = get_profile(router_addr).get('addr4port')
+
         np_server.add_service(NeptuneTlvClient('0.0.0.0', '1316', NeptuneMessagerManager(NeptuneRouterInGameServer)))
         self.np_server = np_server
 

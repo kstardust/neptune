@@ -6,6 +6,7 @@ from neptune_py.skeleton.transporter.neptune_tlv import NeptuneTlvService, Neptu
 from neptune_py.skeleton.entity.entity import NeptuneEntityBase
 from neptune_py.skeleton.introspector import Introspector
 from . router import NeptuneRouterInRouterManager
+from neptune_py.etc.config import get_profile
 
 
 class RouterEntityManager(NeptuneServiceSkeleton):
@@ -35,15 +36,13 @@ class NeptuneRouterManagerApp:
 
         np_server.add_service(RouterEntityManager("RouterEntityManager"))
         np_server.add_service(Introspector())
-        np_server.add_service(NeptuneTlvService('0.0.0.0', '1313', self.client_manager))
+
+        addr4router = np_server.profile.get('addr4router')
+        np_server.add_service(NeptuneTlvService(*addr4router, self.client_manager))
 
         self.np_server = np_server
 
     async def run(self):
-        async def server2():
-            await asyncio.sleep(2)
-            await self.np_server2.run()
-
         await asyncio.gather(
             self.np_server.run()
         )

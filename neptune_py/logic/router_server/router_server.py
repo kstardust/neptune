@@ -10,6 +10,7 @@ from neptune_py.skeleton.introspector import Introspector
 from neptune_py.skeleton.neptune_rpc.decorator import rpc
 from neptune_py.skeleton.messager import NeptuneMessageType
 from .router_port import NeptuneRouterPort, NeptuneRouterRouterPort
+from neptune_py.etc.config import get_profile
 
 
 class NeptuneRouterManagerInRouter(NeptuneEntityBase):
@@ -82,27 +83,26 @@ class NeptuneRouter:
 
     def init_services(self):
         np_server = NeptuneServerSkeleton(self.name)
-        np_server.profile = {
-            "addr4router": ('127.0.0.1', '1315'),
-            "local_addr": "13::"
-        }
         # self.client_manager = NeptuneMessagerManager(TestingClientEntity)
         self.port_manager = NeptuneMessagerManager(NeptuneRouterPort)
         self.router_port_manager = NeptuneMessagerManager(NeptuneRouterRouterPort)
 
         np_server.add_service(RouterEntityManager("RouterEntityManager"))
         np_server.add_service(Introspector())
-        np_server.add_service(NeptuneTlvClient('0.0.0.0', '1313', NeptuneMessagerManager(NeptuneRouterManagerInRouter)))
-        np_server.add_service(NeptuneTlvService('0.0.0.0', '1316', self.port_manager))
-        np_server.add_service(NeptuneTlvService('0.0.0.0', '1315', self.router_port_manager))
+        router_manager_addr = get_profile('router_manager').get('addr4router')
+        np_server.add_service(NeptuneTlvClient(*router_manager_addr, NeptuneMessagerManager(NeptuneRouterManagerInRouter)))
+        np_server.add_service(NeptuneTlvService(
+            *np_server.profile.get('addr4port'),
+            self.port_manager)
+        )
+        np_server.add_service(NeptuneTlvService(
+            *np_server.profile.get('addr4router'),
+            self.router_port_manager)
+        )
 
         self.np_server = np_server
 
     async def run(self):
-        async def server2():
-            await asyncio.sleep(2)
-            await self.np_server2.run()
-
         await asyncio.gather(
             self.np_server.run()
         )

@@ -8,7 +8,7 @@ import logging, traceback
 CalloutNode = collections.namedtuple('CalloutNode', ['frame', 'interval', 'callback', 'callback_args'])
 
 
-class NeptuneTick:
+class NeptuneTicker:
 
     def __init__(self, frame_rate=60, callout_queue_size=200):
         self.frame_rate = frame_rate
@@ -72,7 +72,7 @@ class NeptuneTick:
 
 if __name__ == "__main__":
 
-    tick = NeptuneTick()
+    tick = NeptuneTicker()
     rid = tick.InvokeRepeat(3, 0.5, lambda x: print(x), 1)
 
     for i in range(200):

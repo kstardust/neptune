@@ -1,5 +1,21 @@
 import collections
+import itertools
 from .components import ComponentMixin
+
+
+class BattleEntityAttributes:
+    def __init__(self):
+        pass
+
+    def Init(self):
+        self.m_nHp = 1000
+        self.m_nEnergy = 0
+        self.m_nAbilityEnergy = 100
+
+        self.m_nAttackDamage = 100
+
+        self.m_nArmor = 10
+        self.m_nAgility = 100
 
 
 class BattleEntity:
@@ -8,6 +24,8 @@ class BattleEntity:
         self.m_BattleGround = None
         self.m_Id = None
         self.m_dictComponents = collections.defaultdict(set)
+        self.m_Attributes = BattleEntityAttributes()
+        self.m_Attributes.Init()
 
     def AddComponent(self, Component: ComponentMixin):
         self.m_dictComponents[Component.m_eType].add(Component)
@@ -39,14 +57,30 @@ class BattleEntity:
     def GetBattleGround(self):
         return self.m_BattleGround
 
-    def OnDamage(self, Damage):
+    def Dead(self):
+        self.BeforeDead()
+        for Component in itertools.chain.from_iterable(self.m_dictComponents.values()):
+            Component.DetachFromEntity(self)
+        self.m_BattleGround.OnEntityDead(self)
+        self.AfterDead()
+
+    def AfterDead(self):
         pass
+
+    def BeforeDead(self):
+        pass
+
+    def OnDamage(self, Damage):
+        self.m_Attributes.m_nHp -= Damage.m_nValue
+        if self.m_Attributes.m_nHp <= 0:
+            self.Dead()
 
     def AddBuff(self, Buff):
         pass
 
     def HitByBullet(self, Bullet):
-        print(f"{self} hit by bullet")
+        self.OnDamage(Bullet.m_Damage)
+        print(f"{self} hit by bullet {Bullet.m_Damage} HP: {self.m_Attributes.m_nHp}")
 
     def __str__(self):
         return f"Entity {self.m_Id}"

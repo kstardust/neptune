@@ -12,7 +12,7 @@ if __name__ == '__main__':
     BG.AddBattleEntity(Entity1)
     BG.AddBattleEntity(Entity2)
 
-    Entity1.AddComponent(Railgun(BinaryScope(2, BG), Bullet, 2))
+    Entity1.AddComponent(Railgun(BinaryScope(2, BG), Bullet, 3))
     Entity2.AddComponent(Railgun(BinaryScope(1, BG), Bullet, 2))
 
     for i in range(600):

@@ -5,4 +5,8 @@ class EDamageType:
 
 class Damage:
     def __init__(self, eType, nHp):
-        pass
+        self.m_nValue = nHp
+        self.m_eType = eType
+
+    def __str__(self):
+        return f'Damage {self.m_eType} {self.m_nValue}'

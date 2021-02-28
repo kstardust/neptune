@@ -21,4 +21,4 @@ class Bullet:
             self.m_Target.HitByBullet(self)
 
     def __str__(self):
-        return "Bullet {} -> {}".format(self.m_Attacker, self.m_Target)
+        return f"Bullet DMG {self.m_Damage} {self.m_Attacker} -> {self.m_Target}"

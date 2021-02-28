@@ -45,6 +45,12 @@ class BattleGround:
     def GetTicker(self):
         return self.m_Ticker
 
+    def OnEntityDead(self, Entity):
+        Entity = self.m_dictBattleEntiteCamps[Entity.m_eCamp].pop(Entity.m_Id, None)
+        if Entity is None:
+            return
+        print(f"OnEntityDead: {Entity.m_Id}")
+
     def UpdateEntites(self):
         for dictCampEntities in self.m_dictBattleEntiteCamps.values():
             for Entity in dictCampEntities.values():

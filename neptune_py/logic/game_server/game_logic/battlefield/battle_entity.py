@@ -24,6 +24,7 @@ class BattleEntity:
         self.m_BattleGround = None
         self.m_Id = None
         self.m_dictComponents = collections.defaultdict(set)
+        self.m_bDead = False
         self.m_Attributes = BattleEntityAttributes()
         self.m_Attributes.Init()
 
@@ -59,6 +60,7 @@ class BattleEntity:
 
     def Dead(self):
         self.BeforeDead()
+        self.m_bDead = True
         for Component in itertools.chain.from_iterable(self.m_dictComponents.values()):
             Component.DetachFromEntity(self)
         self.m_BattleGround.OnEntityDead(self)
@@ -71,14 +73,22 @@ class BattleEntity:
         pass
 
     def OnDamage(self, Damage):
+        if self.m_bDead:
+            return
+
         self.m_Attributes.m_nHp -= Damage.m_nValue
         if self.m_Attributes.m_nHp <= 0:
             self.Dead()
 
     def AddBuff(self, Buff):
+        if self.m_bDead:
+            return
         pass
 
     def HitByBullet(self, Bullet):
+        if self.m_bDead:
+            return
+
         self.OnDamage(Bullet.m_Damage)
         print(f"{self} hit by bullet {Bullet.m_Damage} HP: {self.m_Attributes.m_nHp}")
 

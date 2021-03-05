@@ -12,8 +12,8 @@ class Bullet:
     def SetDamage(self, Damage):
         self.m_Damage = Damage
 
-    def AttachBuff(self, Damage):
-        self.m_Damage = Damage
+    def AttachBuff(self, Buff):
+        self.m_listBuffs.append(Buff)
 
     def Update(self):
         # called every frame
